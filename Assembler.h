@@ -1,48 +1,192 @@
+/**
+    \file
+    File with functions for compiling user's code
+
+    Thank you for using this program!
+    \warning Assembler works only with documentated code doubles \n
+    \authors Anna Savchuk
+    \note    All the information about compilled file is in the file "listing.txt"\n
+    \date    Last update was 10.22.20 at 14:07
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
+#include "Enums.h"
 #include "Reading_from_file.h"
 
-typedef enum assembler_errors { ASM_OK_00,
-                                ASM_WRONG_NUM_01,
-                                ASM_WRONG_COMMAND_02,
-                                ASM_FILE_ERROR_03,
-                                ASM_MEMORY_ERROR_04   } assembl_er;
+struct assembling_mark{
+    int       num;
+    long long where;
+    char     *mark_name;
+};
+
+typedef struct assembling_mark Marker;
 
 #define MAX_COM_LEN "5"
 const int MAX_COM = 5;
 const int MAX_REG = 4;
 
-#define CHECKING(mode, first, error)                 \
-    int read_reg = read_string(&first, registr, 1); \
-    if (!read_reg)                                  \
-    {                                               \
-        mode = read_regis(registr);                 \
-        int check = check_trash(&first);            \
-        if (mode > MAX_REG || check)                \
-        {                                           \
-            error = ASM_WRONG_COMMAND_02;           \
-            break;                                  \
-        }                                           \
-     }                                              \
-    else if (read_reg == 1)                         \
-    {                                               \
-        error = ASM_WRONG_COMMAND_02;               \
-        break;                                      \
+#define DEFINE_COMMANDS(name, number, arg, coding)                                                 \
+    if (!strcmp(command, #name))                                                                   \
+    {                                                                                              \
+        code = COM_##name;                                                                         \
+        if (j == 2)                                                                                \
+        {                                                                                          \
+            fwrite(&code, sizeof(char), 1, out);                                                   \
+        }                                                                                          \
+                                                                                                   \
+        if (arg > 0)                                                                               \
+        {                                                                                          \
+            error = translate_arg(&first, &command, &code, out, list, &address, j, marks, amount); \
+            if (error != ASM_OK)                                                                   \
+            {                                                                                      \
+                break;                                                                             \
+            }                                                                                      \
+        }                                                                                          \
+        else                                                                                       \
+        {                                                                                          \
+            if (j == 2)                                                                            \
+            {                                                                                      \
+                listing(list, address, code, mode, 0, 0, command, NULL, -1);                       \
+            }                                                                                      \
+            address++;                                                                             \
+        }                                                                                          \
+                                                                                                   \
+        if (j == 2)                                                                                \
+        {                                                                                          \
+            error = check_trash(&first);                                                           \
+            if (error != ASM_OK)                                                                   \
+            {                                                                                      \
+                break;                                                                             \
+            }                                                                                      \
+        }                                                                                          \
+                                                                                                   \
+        flag = 0;                                                                                  \
     }
 
+/*!
+Reads the text part of code
+@param[in]  **str                   The buffer to read from
+@param[in]   *res                   The buffer to write in
+@param[in]    flag                  The flag that is 0 if the function reads from the beginnig of the line
+                                    in the primary code and 1 if else
+
+Returns       0                     If the reading went correctly\n
+              1                     If nothing was read
+*/
 int        read_string (char **str, char *res, int flag);
 
+/*!
+Checks what kind of register was read
+@param[in]   *reg                   The string with the register
+
+Returns       1                     If it was RAX\n
+              2                     If it was RBX\n
+              3                     If it was RCX\n
+              4                     If it was RDX\n
+              5                     If the format of input was wrong
+*/
 double     read_regis  (char *reg);
 
-assembl_er read_value  (char **str, double &value);
+/*!
+Makes out a header for listing
+@param[in]   *list                  A file to write in
+*/
+void       list_header (FILE *list);
 
-int        check_trash (char **str);
+/*!
+Makes out a listing for each command
+@param[in]   *list                  A file to write in
+@param[in]    address               Address of the command in "machine code"
+@param[in]    code                  A code of command
+@param[in]    mode                  A mode of the command (0 if no registers, 1-4 if there is a register)
+@param[in]    args                  Number of arguments for the command
+@param[in]    value                 User's value
+@param[in]   *command               The name of the command
+@param[in]   *reg                   The name of the register
+@param[in]    dir                   A directory to jump into
+*/
+void       listing     (FILE *list, long int address, char code, char mode, int args, double value, char *command, char *reg, long int dir);
 
-assembl_er assembling  (FILE *out, char *first, const size_t n_lines);
+/*!
+Reads the text part of code
+@param[in]  **str                   The buffer to read from
+@param[in]   *value                 The variable with future value in it
 
+Returns       ASM_OK                If it was read correctly
+              ASM_WRONG_NUM         If the format of input was wrong
+*/
+assembl_er read_value  (char **str, double *value);
+
+/*!
+Checks if the end of the line in primary code is correct
+@param[in]  **str                   The buffer to read from
+
+Returns       ASM_OK                If the reading went correctly\n
+              ASM_WRONG_COMMAND     If the input was incorrect
+*/
+assembl_er check_trash (char **str);
+
+/*!
+Checks if the string is the mark (label)
+@param[in]   *str                   String to check
+             *add                   The address to jump into
+             *marks                 The array with marks
+              amount_marks          The amount of marks in the array of marks
+
+Returns       ASM_OK                If it is a mark
+              ASM_WRONG_COMMAND     If it is not a mark
+*/
+assembl_er check_mark  (char *str, long int *add, Marker *marks, long int amount_marks);
+
+/*!
+Checks if after the command goes value, register or mark
+@param[in]  **str                   String to check
+             *command               The command to check line after
+             *code                  A code of the command
+             *out                   A file to write "machine code" into
+             *list                  A file to write listing into
+             *address               Address of the command in "machine code"
+              just_check            The indicator if it is just looking for marks or needs listing and machine code
+             *marks                 The array with marks
+              amount_marks          The amount of marks in the array of marks
+
+Returns       ASM_OK                If everything is read correctly
+              ASM_WRONG_NUM         If a value supposed to be written, but it has a mistake
+              ASM_WRONG_COMMAND     If the wrong command was inputted
+*/
+assembl_er translate_arg(char **str, char **command, char *code, FILE *out, FILE *list,
+                         long int *address, int just_check, Marker *marks, long int amount_marks);
+
+/*!
+Assembles the primary file and makes a binary file for the processor
+Reports about all conversions into "listing.txt"
+@param[in]  **out                   File to put binary code into
+             *first                 The buffer to read from
+              n_lines               The number of lines in user's code
+
+Returns       ASM_OK                If it was read correctly
+              ASM_WRONG_NUM         If the format of value input is wrong
+              ASM_WRONG_COMMAND     If the format of command input is wrong
+              ASM_FILE_ERROR        If there is an error with openning the file
+              ASM_MEMORY_ERROR      If mamory access denied
+*/
+assembl_er assembling  (FILE *out, char *input, const size_t n_lines);
+
+/*!
+Assembles the primary file and makes a binary file for the processor
+Reports about all conversions into "listing.txt"
+@param[in]   *file_name             The name of file to read from
+
+Returns       ASM_OK                If it was read correctly
+              ASM_WRONG_NUM         If the format of value input is wrong
+              ASM_WRONG_COMMAND     If the format of command input is wrong
+              ASM_FILE_ERROR        If there is an error with openning the file
+              ASM_MEMORY_ERROR      If mamory access denied
+*/
 assembl_er processing  (const char *file_name);
 
 
@@ -54,7 +198,7 @@ int read_string (char **str, char *res, int flag)
         while (**str == ' ')
             *(*str)++;
     else
-        while (isspace(**str) || **str == ';')
+        while (isspace(**str) || (**str) == ';')
         {
             while (**str != '\n')
             {
@@ -63,7 +207,7 @@ int read_string (char **str, char *res, int flag)
             *(*str)++;
         }
 
-    while (counter < MAX_COM && isalpha(**str))
+    while (counter < MAX_COM && (isalnum(**str) || (**str == ':') || (**str == '#')))//ÑƒÐ±Ñ€Ð°Ñ‚ÑŒ ÐºÐ¾Ð½ÑÑ‚Ð°Ð½Ñ‚Ñƒ Ð¼Ð°ÐºÑÐ¸Ð¼ÑƒÐ¼Ð°
     {
         *res = **str;
         res++;
@@ -73,14 +217,14 @@ int read_string (char **str, char *res, int flag)
     *(res++) = '\0';
 
     if (!counter)
-        return 2;
+        return 1;
 
     return 0;
 }
 
 double read_regis (char *reg)
 {
-    if (!strcmp(reg, "RAX"))
+    if      (!strcmp(reg, "RAX"))
         return 1;
     else if (!strcmp(reg, "RBX"))
         return 2;
@@ -90,6 +234,41 @@ double read_regis (char *reg)
         return 4;
     else
         return 5;
+}
+
+void list_header (FILE *list)
+{
+    fprintf(list, "LISTING %82c\n", ' ');
+    fprintf(list, "ADDRS|%3cSIMPLE CODE%3c|%21cBYTE CODE%22c|%4cCODE%5c\n", ' ', ' ', ' ', ' ', ' ', ' ');
+    fprintf(list, "%95c\n", '_');
+}
+
+void listing (FILE *list, long int address, char code, char mode, int args, double value, char *command, char *reg, long int dir)
+{
+    if (code == 0)
+    {
+        fprintf(list, "%04x | %2d %12c | %016llx %33c | %5s\n",
+                       address, code, ' ', (double)code, ' ', command);
+    }
+    else if (!args)
+    {
+        fprintf(list, "%04x | %2d %12c | %016llx %33c | %5s\n",
+                       address, code, ' ', (double)code, ' ', command);
+    }
+    else if (args == 1)
+    {
+        if (dir > 0)
+            fprintf(list, "%04x | %2d %ld %10c | %016llx %016llx %16c | %5s %4d\n",
+                        address, code, mode, ' ', (double)code, (double)mode, ' ', command, dir);
+        else
+            fprintf(list, "%04x | %2d %ld %10c | %016llx %016llx %16c | %5s %4s\n",
+                        address, code, mode, ' ', (double)code, (double)mode, ' ', command, reg);
+    }
+    else
+    {
+        fprintf(list, "%04x | %2d %d %10lg | %016llx %016llx %016llx | %5s %04d %lg\n",
+                        address, code, mode, value, (double)code, (double)mode, value, command, mode, value);
+    }
 }
 
 assembl_er read_value  (char **str, double *value)
@@ -114,184 +293,254 @@ assembl_er read_value  (char **str, double *value)
 
     if (code_val)
     {
-        return ASM_WRONG_NUM_01;
+        return ASM_WRONG_NUM;
     }
 
-    return ASM_OK_00;
+    return ASM_OK;
 }
 
-int check_trash (char **str)
+assembl_er check_trash (char **str)
 {
     int counter = 0;
 
     if (!isspace(**str) && (**str != ';') && (**str != '\r') && (**str != '\n') && (**str != '\0'))
     {
-        return 1;
+        return ASM_WRONG_COMMAND;
     }
 
-    return 0;
+    return ASM_OK;
 }
 
-assembl_er assembling (FILE *out, char *first, const size_t n_lines)
+assembl_er check_mark  (char *str, long int *add, Marker *marks, long int amount_marks)
 {
-    assert(first != NULL);
+    char *copy = (char*) calloc(MAX_COM, sizeof(char));
+    for (int j = 0; j < MAX_COM; j++)
+    {
+        copy[j] = str[j + 1];
+        if (str[j + 1] == '\0')
+            break;
+    }
+
+    int flag_mark = 0;
+
+    for (long int j = 0; j < amount_marks; j++)
+    {
+        if (!strcmp(copy, marks[j].mark_name))
+        {
+            flag_mark = 1;
+            *add      = marks[j].where;
+            break;
+        }
+    }
+
+    free(copy);
+
+    if (flag_mark)
+    {
+        return ASM_OK;
+    }
+    else
+    {
+        return ASM_WRONG_COMMAND;
+    }
+}
+
+assembl_er translate_arg(char **str, char **command, char *code, FILE *out, FILE *list, long int *address, int just_check, Marker *marks, long int amount_marks)
+{
+    int    mode           = 0;
+    double value          = 0;
+    int    trailing_index = 0;
+
+    char *reg = (char*) calloc(MAX_COM, sizeof(char));
+    if (!reg)
+    {
+        return ASM_MEMORY_ERROR;
+    }
+
+    sscanf(*str, "%lg%n", &value, &trailing_index);
+    if (!trailing_index)
+    {
+        assembl_er error = ASM_OK;
+
+        int read_reg = read_string(str, reg, 1);
+        if (!read_reg)
+        {
+            mode = read_regis(reg);
+            if (mode > MAX_REG)
+            {
+                if (reg[0] == '#' && *code >= 12)
+                {
+                    long int add  = 0;
+
+                    assembl_er checking_mark = ASM_OK;
+
+                    if (just_check == 2)
+                        checking_mark = check_mark(reg, *address, &add, marks, amount_marks);
+
+                    if (checking_mark == ASM_OK)
+                    {
+                        if (just_check == 2)
+                        {
+                            fwrite(&add, sizeof(long long), 1, out);
+                            listing(list, *address, *code, mode, 1, value, *command, reg, add);
+                        }
+                        (*address) += 9;
+                    }
+                    else
+                    {
+                        free(reg);
+                        return ASM_WRONG_COMMAND;
+                    }
+
+                    free(reg);
+                    return checking_mark;
+                }
+                else
+                {
+                    free(reg);
+                    return ASM_WRONG_COMMAND;
+                }
+            }
+        }
+
+        if (just_check == 2)
+        {
+            if (mode > 0 && mode < 12)
+            {
+                fwrite(&mode, sizeof(char), 1, out);
+                listing(list, *address, *code, mode, 1, value, *command, reg, -1);
+            }
+            else if (!mode)
+            {
+                listing(list, *address, *code, mode, 1, value, *command, NULL, -1);
+            }
+        }
+        (*address) += 2;
+     }
+     else if (*code == 1)
+     {
+        assembl_er read_val = read_value(str, &value);
+
+        if (read_val != ASM_OK)
+        {
+            free(reg);
+            return read_val;
+        }
+        mode = 0;
+
+        if (just_check == 2)
+        {
+            fwrite(&mode,  sizeof(char), 1, out);
+            fwrite(&value, sizeof(double), 1, out);
+
+            listing(list, *address, *code, mode, 2, value, *command, reg, -1);
+        }
+        (*address) += 10;
+      }
+      else
+      {
+        free(reg);
+        return ASM_WRONG_COMMAND;
+      }
+
+      free(reg);
+
+      return ASM_OK;
+}
+
+assembl_er assembling (FILE *out, char *input, const size_t n_lines)
+{
+    assert(input != NULL);
     assert(out   != NULL);
 
     FILE *list = fopen("listing.txt", "wb");
+    list_header(list);
     long int address = 0;
 
-    assembl_er error = ASM_OK_00;
+    long int amount = 0;
+
+    assembl_er error = ASM_OK;
 
     char symb = EOF;
 
     char *command = (char*) calloc(MAX_COM, sizeof(char));
-    char *registr = (char*) calloc(MAX_REG, sizeof(char));
-    if (command == NULL)
+    if (!command)
     {
-        error = ASM_MEMORY_ERROR_04;
+        error = ASM_MEMORY_ERROR;
         return error;
     }
 
-    for (long int i = 0; i < n_lines - 1; i++)
+    Marker *marks = NULL;
+
+    for (int j = 0; j < 3; j++)
     {
-        int read_com = read_string(&first, command, 0);
-
-        double code  = 0;
-        double mode  = 0;
-        double value = 0;
-
-        if (read_com == 0)
+        char *first = input;
+        for (long int i = 0; i < n_lines - 1; i++)
         {
-            if (!strcmp(command, "PUSH"))
+            int read_com = read_string(&first, command, 0);
+
+            char   code     = 0;
+            char   mode     = 0;
+            double value    = 0;
+
+            int flag = 1;
+
+            if (read_com == 0)
             {
-                code = 1;
-                fwrite(&code, sizeof(double), 1, out);
-
-                int trailing_index = 0;
-                sscanf(first, "%lg%n", &value, &trailing_index);
-
-                if (!trailing_index)
+                #include "Commands.h"
+                long int flag_mark = 0;
+                if (flag)
                 {
-                    CHECKING(mode, first, error);
-                    fwrite(&mode, sizeof(double), 1, out);
-
-                    fprintf(list, "%04x | %lg %lg            | %016llx %016llx                  | %5s REG %lg\n",
-                                   address, code, mode, code, mode, command, mode);
-                    address += 2;
-                }
-                else
-                {
-                    assembl_er read_val = read_value(&first, &value);
-
-                    if (read_val != ASM_OK_00)
+                    for (int k = 0; k < MAX_COM; k++)
                     {
-                        error = read_val;
+                        if (command[k] == ':')
+                        {
+                            flag_mark = 1;
+                            if (j == 1)
+                            {
+                                command[k] = '\0';
+
+                                marks[amount].num       = amount;
+                                marks[amount].where     = address;
+                                marks[amount].mark_name = (char*) calloc(k + 1, sizeof(char));
+                                int l = 0;
+                                for (l = 0; l < k; l++)
+                                    marks[amount].mark_name[l] = command[l];
+                                marks[amount].mark_name[l] = '\0';
+                            }
+                            amount++;
+                            break;
+                        }
+                    }
+
+                    if (!flag_mark)
+                    {
+                        error = ASM_WRONG_COMMAND;
                         break;
                     }
-                    mode = 0;
-                    fwrite(&mode,  sizeof(double), 1, out);
-                    fwrite(&value, sizeof(double), 1, out);
-
-                    fprintf(list, "%04x | %lg %lg %10lg | %016llx %016llx %016llx | %5s REG %lg\n",
-                                        address, code, mode, value, code, mode, value, command, value);
-                    address += 3;
                 }
             }
-            else if (!strcmp(command, "IN"))
+        }
+        if (!j)
+        {
+            if (!amount)
             {
-                printf("Write your value: ");
-
-                CHECKING(mode, first, error);
-                if (mode)
-                    code = 8;
-                else
-                    code = 1;
-
-                double value = 0;
-                int problem = scanf("%lg", &value);
-
-                if (problem != 1)
-                {
-                    error = ASM_WRONG_NUM_01;
-                    break;
-                }
-
-                fwrite(&code,  sizeof(double), 1, out);
-                fwrite(&mode,  sizeof(double), 1, out);
-                fwrite(&value, sizeof(double), 1, out);
-
-                if (code == 8)
-                    fprintf(list, "%04x | %lg %lg %10lg | %016llx %016llx %016llx | %5s REG %lg\n",
-                                    address, code, mode, value, code, mode, value, command, value);
-                else
-                    fprintf(list, "%04x | %lg %lg %10lg | %016llx %016llx %016llx | %5s %lg\n",
-                                    address, code, mode, value, code, mode, value, command, value);
-                address += 3;
+                j++;
             }
             else
             {
-                if (!strcmp(command, "ADD"))
-                {
-                    code = 2;
-                    //CHECKING(mode, first, error);
-                }
-                else if (!strcmp(command, "SUB"))
-                {
-                    code = 3;
-                    //CHECKING(mode, first, error);
-                }
-                else if (!strcmp(command, "MUL"))
-                {
-                    code = 4;
-                    //CHECKING(mode, first, error);
-                }
-                else if (!strcmp(command, "OUT"))
-                {
-                    code = 5;
-                    //CHECKING(mode, first, error);
-                }
-                else if (!strcmp(command, "SIN"))
-                    code = 6;
-                else if (!strcmp(command, "COS"))
-                    code = 7;
-                else if (!strcmp(command, "HLT"))
-                {
-                    code = 0;
-                    fprintf(list, "%04x | %lg              | %016llx                                   | %5s\n",
-                                    address, code, code, command);
-                    fwrite(&code, sizeof(double), 1, out);
-                    break;
-                }
-                else
-                {
-                    error = ASM_WRONG_COMMAND_02;
-                    break;
-                }
-                CHECKING(mode, first, error);
-
-                fwrite(&code, sizeof(double), 1, out);
-                fwrite(&mode, sizeof(double), 1, out);
-
-                if (!mode)
-                    fprintf(list, "%04x | %lg %lg            | %016llx %016llx                  | %5s\n",
-                                    address, code, mode, code, mode, command);
-                else
-                    fprintf(list, "%04x | %lg %lg            | %016llx %016llx                  | %5s REG %lg\n",
-                                    address, code, mode, code, mode, command, mode);
-
-                address += 2;
+                marks = (Marker*) calloc(amount, sizeof(Marker));
             }
-
-            /*do
-            {
-                symb = *first;
-                first++;
-            }while(symb != '\n');*/  //!!!!!!!!!!!!!!!!1äîäåëàòü ðåãèñòðû âåçäå!!!!!!!!!!!!!!!
         }
+        address = 0;
+
+        if (!j)
+            amount = 0;
     }
 
     free(command);
-    free(registr);
+    if (amount)
+        free(marks);
 
     fclose(list);
 
@@ -305,7 +554,7 @@ assembl_er processing (const char *file_name)
 
     char *first = reading_file(file_name, &length, &n_lines);
     if (!first)
-        return ASM_FILE_ERROR_03;
+        return ASM_FILE_ERROR;
 
     size_t     length_second = 0;
     size_t     len_code      = 0;
@@ -313,26 +562,26 @@ assembl_er processing (const char *file_name)
     FILE      *out = fopen("second.xex", "wb");
     assembl_er err = assembling(out, first, n_lines);
 
-    if (err != ASM_OK_00)
+    if (err != ASM_OK)
     {
         switch (err)
         {
-            case ASM_WRONG_NUM_01:
+            case ASM_WRONG_NUM:
 
                 printf("Undefined input\n");
                 break;
 
-            case ASM_WRONG_COMMAND_02:
+            case ASM_WRONG_COMMAND:
 
                 printf("Undefined command\n");
                 break;
 
-            case ASM_FILE_ERROR_03:
+            case ASM_FILE_ERROR:
 
                 printf("No file found\n");
                 break;
 
-            case ASM_MEMORY_ERROR_04:
+            case ASM_MEMORY_ERROR:
 
                 printf("Memory access denied\n");
                 break;
@@ -341,10 +590,12 @@ assembl_er processing (const char *file_name)
 
                 break;
         }
-        return err;
     }
 
     free(first);
     fclose(out);
-    return ASM_OK_00;
+
+    return err;
 }
+
+#undef DEFINE_COMMANDS
