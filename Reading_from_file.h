@@ -82,6 +82,8 @@ char *reading_file (const char *file_name, size_t *length, size_t *num_lines)
     char *first   = get_the_text    (input, length);
 
     *num_lines = get_num_lines (first, *length);
+    
+    fclose(input);
 
     return first;
 }
