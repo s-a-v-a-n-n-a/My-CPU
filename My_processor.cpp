@@ -6,224 +6,111 @@
 
 #define COMPILATING
 
+#define DEFINE_COMMANDS(name, number, args, coding) \
+        case number:                                \
+                                                    \
+            coding;                                 \
+                                                    \
+            break;
+
+
 typedef struct Processor_on_stack Processor;
 
 struct Processor_on_stack{
     Stack *stack;
+    Stack *funcs;
     double registers[4];
 };
 
-typedef enum commands_for_processor { HLT_00,
-                                      PUSH_01,
-                                      ADD_02,
-                                      SUB_03,
-                                      MUL_04,
-                                      OUT_05,
-                                      SIN_06,
-                                      COS_07,
-                                      IN_08   } commands;
-
 const char *EXECUTABLE_FILE = "second.xex";
-const char *NAME            = "first.xax";
+const char *NAME            = "disc_func.xax";
 
-void start_perfomance ();
+char *read_program     (size_t *length);
+void  start_perfomance (char *program, size_t length);
 
 int main (int argc, const char **argv)
 {
-    int com = 0;
+    int        com   = 0;
+    assembl_er error = ASM_OK;
+
     #ifdef COMPILATING
     if (argc > 1)
     {
-        processing(argv[1]);
+        error = processing(argv[1]);
         com = 1;
     }
     else
-        processing(NAME);
+        error = processing(NAME);
     #endif
 
-    start_perfomance();
+    if (error == ASM_OK)
+    {
+        size_t length = 0;
+        char  *prog   = read_program(&length);
+        if (prog)
+            start_perfomance(prog, length);
 
-    if (com)
+        if (com)
+            system("pause");
+    }
+    else
         system("pause");
 
     return 0;
 }
 
-void start_perfomance ()
+char *read_program (size_t *length)
 {
-    Processor proc = {};
+    *length        = 0;
+    size_t n_lines = 0;
+    char *program  = (char*) reading_file(EXECUTABLE_FILE, length, &n_lines);
+    if (!program)
+    {
+        printf("No memory access denied\n");
+        return NULL;
+    }
 
+    return program;
+}
+
+void start_perfomance (char *program, size_t length)
+{
+    char *program_copy = program;
+
+    Processor proc = {};
     proc.stack = stack_new(2);
+    proc.funcs = stack_new(2);
     for (int i = 0; i < 4; i++)
     {
         proc.registers[i] = 0;
     }
 
-    size_t length        = 0;
-    size_t n_lines       = 0;
-    double *program      = (double*) reading_file(EXECUTABLE_FILE, &length, &n_lines);
-    if (!program)
+    for (int rip = 0; rip < length/sizeof(char); rip++)
     {
-        printf("No memory access denied\n");
-        return;
-    }
-    double *program_copy = program;
+        char val = *program_copy;
 
-    for (int line = 0; line < length/sizeof(double); line++)
-    {
-        double val = *program_copy;
-
-        double mode = 0;
+        char mode = 0;
 
         double val_earl = 0;
         double val_last = 0;
+
+        long long jump  = 0;
+
         program_copy++;
 
         switch ((int)val)
         {
-            case 0:
-
-                break;
-
-            case 1:
-
-                mode = *program_copy;
-                program_copy++;
-                line++;
-                if ((int)mode)
-                {
-                    stack_push(&proc.stack, proc.registers[(int)mode - 1]);
-                }
-                else
-                {
-                    val_last = *program_copy;
-                    program_copy++;
-                    line++;
-                    stack_push(&proc.stack, val_last);
-                }
-                stack_back(&proc.stack, &val_last);
-                break;
-
-            case 2:
-
-                mode = *program_copy;
-                program_copy++;
-                line++;
-                if ((int)mode)
-                {
-                    stack_pop(&proc.stack, &val_last);
-                    proc.registers[(int)mode - 1] += val_last;
-                }
-                else
-                {
-                    stack_pop(&proc.stack, &val_last);
-                    stack_pop(&proc.stack, &val_earl);
-
-                    stack_push(&proc.stack, val_earl + val_last);
-                }
-
-                break;
-
-            case 3:
-
-                mode = *program_copy;
-                program_copy++;
-                line++;
-                if ((int)mode)
-                {
-                    stack_pop(&proc.stack, &val_last);
-                    proc.registers[(int)mode - 1] -= val_last;
-                }
-                else
-                {
-                    stack_pop(&proc.stack, &val_last);
-                    stack_pop(&proc.stack, &val_earl);
-
-                    stack_push(&proc.stack, val_earl - val_last);
-                }
-
-                break;
-
-            case 4:
-
-                mode = *program_copy;
-                program_copy++;
-                line++;
-                if ((int)mode)
-                {
-                    stack_pop(&proc.stack, &val_last);
-                    proc.registers[(int)mode - 1] *= val_last;
-                }
-                else
-                {
-                    stack_pop(&proc.stack, &val_last);
-                    stack_pop(&proc.stack, &val_earl);
-
-                    stack_push(&proc.stack, val_earl * val_last);
-                }
-
-                break;
-
-            case 5:
-
-                stack_pop(&proc.stack, &val_last);
-                printf("%lg\n", val_last);
-
-                break;
-            case 6:
-
-                mode = *program_copy;
-                program_copy++;
-                line++;
-                if ((int)mode)
-                {
-                    proc.registers[(int)mode - 1] = sin(proc.registers[(int)mode - 1]);
-                }
-                else
-                {
-                    stack_pop(&proc.stack, &val_last);
-
-                    stack_push(&proc.stack, sin(val_last));
-                }
-
-                break;
-
-            case 7:
-
-                mode = *program_copy;
-                program_copy++;
-                line++;
-                if ((int)mode)
-                {
-                    proc.registers[(int)mode - 1] = cos(proc.registers[(int)mode - 1]);
-                }
-                else
-                {
-                    stack_pop(&proc.stack, &val_last);
-
-                    stack_push(&proc.stack, cos(val_last));
-                }
-
-                break;
-
-            case 8:
-
-                mode = *program_copy;
-                program_copy++;
-                val_last = *program_copy;
-                program_copy++;
-                line += 2;
-                proc.registers[(int)mode - 1] = val_last;
-
-                break;
+            #include "Commands.h"
 
             default:
 
-                //верни ошибку, пж
                 break;
         }
     }
 
-    free(program);
+    stack_destruct(&proc.funcs);
     stack_destruct(&proc.stack);
+    free(program);
 }
+
+#undef DEFINE_COMMANDS
