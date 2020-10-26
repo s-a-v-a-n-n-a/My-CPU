@@ -3,13 +3,12 @@
     File with functions for using my stack
     It has constructor, destructor, push, pop, back and resize.
     There is also defend from wrong using of it.
-
     Thank you for using this program!
     \warning This stack works only with doubles \n
     \authors Anna Savchuk
     \note    If any function gets errors not like STACK_OK, they send it to stack_dump \n
              At the end the last information about stack will be added to log_file
-    \date    Last update was 10.10.20 at 21:43
+    \date    Last update was 10.24.20 at 22:40
 */
 
 #include <stdio.h>
@@ -46,31 +45,21 @@ typedef double stack_elem;
     assertion(code);                                                      \
 
 
-#define VERIFYING(that_stack);                                            \
+#define VERIFYING(that_stack, mode);                                      \
     stack_code check = stack_verifier(that_stack);                        \
-    if (check == STACK_TRANSACTION_OK)                                    \
+    if (check != STACK_OK)                                                \
     {                                                                     \
         ASSERTION(check);                                                 \
-        stack_dump((*that_stack), check, STACK_POP);                      \
-    }                                                                     \
-    else if (check != STACK_OK)                                           \
-    {                                                                     \
-        ASSERTION(check);                                                 \
-        stack_dump((*that_stack), check, STACK_POP);                      \
+        stack_dump((*that_stack), check, mode);                           \
     }                                                                     \
 
 
 #define VERIFYING_DESTRUCT(that_stack);                                   \
     stack_code check = stack_verifier(that_stack);                        \
-    if (check == STACK_TRANSACTION_OK)                                    \
+    if (check != STACK_OK)                                                \
     {                                                                     \
         ASSERTION(check);                                                 \
-        stack_dump((*that_stack), check, STACK_POP);                      \
-    }                                                                     \
-    else if (check != STACK_OK)                                           \
-    {                                                                     \
-        ASSERTION(check);                                                 \
-        stack_dump((*that_stack), check, STACK_POP);                      \
+        stack_dump((*that_stack), check, STACK_DESTRUCT);                 \
     }                                                                     \
     else                                                                  \
         stack_dump(*that_stack, STACK_OK, STACK_DESTRUCT);                                                                     \
@@ -95,7 +84,11 @@ struct Defeat_stack
     int           canary_last;
 };
 
+//#define COPYING
+
+#ifdef COPYING
 static Stack *cage_copy;
+#endif
 
 /*!
 Prints the errors in the console
@@ -114,14 +107,13 @@ void              print_state_stack   (FILE *log, Stack *that_stack);
 Outputs the information about the current state of the stack into "log_file.txt"
 @param[in]       *that_stack          The pointer on the shell of the stack
 @param[in]        code                The code of the mistake
-@param[in]        who                 The code o the function requested for dump
+@param[in]        who                 The code of the function requested for dump
 */
 void              stack_dump          (Stack *that_stack, stack_code code, const char *who);
 
 /*!
 Checks if the pointer is valid
 @param[in]       *that_stack          The pointer on the shell of the stack
-
 Returns  STACK_NULL                   If the pointer does not exists
          STACK_SEG_FAULT              If the pointer points in prohibited for using block of memory
          STACK_OK                     If the pointer is valid
@@ -131,7 +123,6 @@ stack_code        is_pointer_valid    (Stack *that_stack);
 /*!
 Counts hash for the buffer in the stack by algorythm Adler-32
 @param[in]       *that_stack          The pointer on the shell of the stack
-
 @param[out]       hash_sum            The hash of the buffer in the stack
 */
 static long int   hashing_buffer      (Stack *that_stack);
@@ -139,7 +130,6 @@ static long int   hashing_buffer      (Stack *that_stack);
 /*!
 Counts hash for the whole stack by algorythm Adler-32
 @param[in]       *that_stack          The pointer on the shell of the stack
-
 @param[out]       hash_sum            The hash of the whole stack
 */
 static long int   hashing_stack       (Stack *that_stack);
@@ -147,7 +137,6 @@ static long int   hashing_stack       (Stack *that_stack);
 /*!
 Checks if the stack was spoiled and returns it to last saved correct version if it was
 @param[in]       *that_stack          The pointer on the shell of the stack
-
 Returns  STACK_OK                     If everything is okay
 */
 static stack_code reserve_copy        (Stack **that_stack, Stack **copy_stack);
@@ -156,7 +145,6 @@ static stack_code reserve_copy        (Stack **that_stack, Stack **copy_stack);
 Frees the spoiled stack and creates new due to the copy
 @param[in]      **stack_1             The pointer on pointer on the shell of the spoiled stack
 @param[in]       *stack_2             The pointer on the shell of the copy of stack
-
 Returns  STACK_TRANSACTION_OK         If the stack was transacted\n
          STACK_TRANSACTION_ERROR      If it was impossible to transact\n
 */
@@ -165,7 +153,6 @@ static stack_code transaction         (Stack **stack_1, Stack *stack_2);
 /*!
 Checks all of the states of the stack
 @param[in]      *that_stack           The pointer on the shell of the stack
-
 Returns  STACK_OK                     If everything is ok\n
          STACK_NULL                   If there wasn't pointers on units of stack\n
          STACK_SEG_FAULT              If memory access denied\n
@@ -180,7 +167,6 @@ stack_code        stack_verifier      (Stack **that_stack);
 /*!
 Creates new stack
 @param[in]        size                The size of the future buffer of the stack
-
 @param[out]      *stack_tmp           The pointer on the shell of the future stack
 */
 Stack            *stack_new           (size_t size);
@@ -188,7 +174,6 @@ Stack            *stack_new           (size_t size);
 /*!
 Constructs the stack
 @param[in]      **that_stack          The pointer on pointer on the shell of the future stack
-
 Returns  STACK_OK                     If everything is ok
          STACK_NO_CONSTRUCT           If it was impossible to create the stack
 */
@@ -197,7 +182,6 @@ stack_code        stack_construct     (Stack **that_stack, size_t stack_size);
 /*!
 Destructs the stack
 @param[in]      **that_stack          The pointer on pointer on the shell of the stack
-
 Returns  STACK_OK                     If everything is ok\n
          STACK_NULL                   If there wasn't pointers on units of stack\n
          STACK_SEG_FAULT              If memory access denied\n
@@ -212,7 +196,6 @@ stack_code        stack_destruct      (Stack **that_stack);
 /*!
 Changes the capacity of the stack
 @param[in]       *that_stack          The pointer on the shell of the stack
-
 Returns  STACK_OK                     If everything is ok\n
          STACK_NULL                   If there wasn't pointers on units of stack\n
          STACK_SEG_FAULT              If memory access denied\n
@@ -230,7 +213,6 @@ stack_code        stack_resize        (Stack **that_stack, const double amount);
 Adds value to the end of the stack
 @param[in]      **that_stack          The pointer on pointer on the shell of the stack
 @param[in]        value               The value wanted to be pushed
-
 Returns  STACK_OK                     If everything is ok\n
          STACK_NULL                   If there wasn't pointers on units of stack\n
          STACK_SEG_FAULT              If memory access denied\n
@@ -246,7 +228,6 @@ stack_code        stack_push          (Stack **that_stack, stack_elem value);
 Delets value from the end of the stack
 @param[in]      **that_stack          The pointer on pointer on the shell of the stack
 @param[in]       *value               The pointer on the value wanted to be pushed
-
 Returns  STACK_OK                     If everything is ok\n
          STACK_NULL                   If there wasn't pointers on units of stack\n
          STACK_SEG_FAULT              If memory access denied\n
@@ -262,7 +243,6 @@ stack_code        stack_pop           (Stack **that_stack, stack_elem *value);
 Shows value from the end of the stack
 @param[in]      **that_stack          The pointer on pointer on the shell of the stack
 @param[in]       *value               The pointer on the value wanted to be pushed
-
 Returns  STACK_OK                     If everything is ok\n
          STACK_NULL                   If there wasn't pointers on units of stack\n
          STACK_SEG_FAULT              If memory access denied\n
@@ -319,17 +299,17 @@ void assertion (stack_code code)
 
 void print_state_stack(FILE *log, Stack *that_stack)
 {
-    fprintf(log, "Current capacity: %zu\n", that_stack->stack->capacity);
-    fprintf(log, "Current size    : %zu\n", that_stack->stack->length - 1);
+    fprintf(log, "Current capacity: %u\n", that_stack->stack->capacity);
+    fprintf(log, "Current size    : %u\n", that_stack->stack->length - 1);
     fprintf(log, "Current address of the stack : %p\n", that_stack->stack);
     fprintf(log, "Current address of the buffer: %p\n", that_stack->stack->buffer);
     for (size_t i = 0; i <= that_stack->stack->length; i++)
     {
-        fprintf(log, "[%4zu] : " elem "\n", i, that_stack->stack->buffer[i]);
+        fprintf(log, "[%4u] : " elem "\n", i, that_stack->stack->buffer[i]);
     }
     for (size_t i = that_stack->stack->length + 1; i < that_stack->stack->capacity; i++)
     {
-        fprintf(log, "[%4zu] : NAN (POISON)\n", i);
+        fprintf(log, "[%4u] : NAN (POISON)\n", i);
     }
     fprintf(log, "Current hash of the buffer: %ld\n", that_stack->stack->hash_buffer);
     fprintf(log, "Current hash of the stack : %ld\n", that_stack->stack->hash_stack);
@@ -538,41 +518,50 @@ stack_code stack_verifier (Stack **that_stack)
     {
         return indicator;
     }
+    #ifdef COPYING
     indicator = is_pointer_valid(cage_copy);
     if (indicator != STACK_OK)
     {
         return indicator;
     }
 
+
     long int flag_eq              = ((*that_stack)->stack->buffer[(*that_stack)->stack->length] ==
                                       cage_copy ->stack->buffer[cage_copy ->stack->length]);
+    #endif
 
     long int hash_tmp_stack       = hashing_stack(*that_stack);
     long int hash_tmp_stack_buf   = hashing_buffer(*that_stack);
 
+    #ifdef COPYING
     long int hash_tmp_copy        = hashing_stack(cage_copy);
     long int hash_tmp_copy_buf    = hashing_buffer(cage_copy);
+    #endif
 
     long int flag_hash_stack      = (hash_tmp_stack == (*that_stack)->stack->hash_stack);
-    long int flag_hash_copy       = (hash_tmp_copy  == cage_copy->stack->hash_stack);
     long int flag_hash_stack_buf  = (hash_tmp_stack_buf == (*that_stack)->stack->hash_buffer);
+
+    #ifdef COPYING
+    long int flag_hash_copy       = (hash_tmp_copy  == cage_copy->stack->hash_stack);
     long int flag_hash_copy_buf   = (hash_tmp_copy_buf  == cage_copy->stack->hash_buffer);
+    #endif
 
     if ((*that_stack)->canary_first == 0x5E7CA6E && (*that_stack)->canary_last == 0x0FFCA6E)
     {
+        #ifdef COPYING
         if (flag_eq && (!isnan((float)(*that_stack)->stack->buffer[(*that_stack)->stack->length]) ||
                         !isnan((float)(cage_copy)->stack->buffer[cage_copy->stack->length])))
         {
             return STACK_DELETED;
         }
-        else if (!flag_eq && !isnan((float)(*that_stack)->stack->buffer[(*that_stack)->stack->length]) ||
-                 !flag_hash_stack && flag_hash_copy && !flag_hash_stack_buf && flag_hash_copy_buf)
+        else if ((!flag_eq && !isnan((float)(*that_stack)->stack->buffer[(*that_stack)->stack->length])) ||
+                 (!flag_hash_stack && flag_hash_copy && !flag_hash_stack_buf && flag_hash_copy_buf))
         {
             stack_code code = transaction(that_stack, cage_copy);
             return code;
         }
-        else if (!flag_eq && !isnan((float)(cage_copy)->stack->buffer[cage_copy->stack->length]) ||
-                 flag_hash_stack && !flag_hash_copy && flag_hash_stack_buf && !flag_hash_copy_buf)
+        else if ((!flag_eq && !isnan((float)(cage_copy)->stack->buffer[cage_copy->stack->length])) ||
+                 (flag_hash_stack && !flag_hash_copy && flag_hash_stack_buf && !flag_hash_copy_buf))
         {
             stack_code code = transaction(&cage_copy, *that_stack);
             return code;
@@ -617,18 +606,28 @@ stack_code stack_verifier (Stack **that_stack)
         {
             return STACK_INVADERS;
         }
+        #else
+        if (!isnan((float)(*that_stack)->stack->buffer[(*that_stack)->stack->length]))
+        {
+            return STACK_DELETED;
+        }
+        else if (!(flag_hash_stack && flag_hash_stack_buf))
+        {
+            return STACK_INVADERS;
+        }
+        #endif
     }
     else
     {
         return STACK_DEAD_CANARY;
     }
+
     return STACK_OK;
 }
 
 Stack *stack_new(size_t size)
 {
     Stack *cage = NULL;
-
     if (stack_construct(&cage, size) == STACK_NO_CONSTRUCT)
     {
         stack_destruct(&cage);
@@ -652,7 +651,6 @@ stack_code stack_construct(Stack **that_stack, size_t stack_size)
         ASSERTION(STACK_NO_CONSTRUCT);
         stack_dump((*that_stack), STACK_NO_CONSTRUCT, STACK_CONSTRUCT);
         return STACK_NO_CONSTRUCT;
-
     }
     (*that_stack)->stack->buffer[0]    = NAN;
     (*that_stack)->stack->buffer[1]    = NAN;
@@ -660,6 +658,7 @@ stack_code stack_construct(Stack **that_stack, size_t stack_size)
     (*that_stack)->stack->hash_buffer  = hashing_buffer(*that_stack);
     (*that_stack)->stack->hash_stack   = hashing_stack (*that_stack);
 
+    #ifdef COPYING
     cage_copy               = (Stack*) calloc(1, sizeof(Stack));
     cage_copy->canary_first = 0x5E7CA6E;
     cage_copy->stack        = (Structure*) calloc(1, sizeof(Structure));
@@ -679,6 +678,7 @@ stack_code stack_construct(Stack **that_stack, size_t stack_size)
     cage_copy->stack->length       = 1;
     cage_copy->stack->hash_buffer  = hashing_buffer(cage_copy);
     cage_copy->stack->hash_stack   = hashing_stack (cage_copy);
+    #endif
 
     return STACK_OK;
 }
@@ -687,6 +687,7 @@ stack_code stack_destruct(Stack **that_stack)
 {
     VERIFYING_DESTRUCT(that_stack);
 
+    #ifdef COPYING
     if (*that_stack)
     {
         if ((*that_stack)->stack)
@@ -708,13 +709,18 @@ stack_code stack_destruct(Stack **that_stack)
         }
         free(cage_copy);
     }
+    #else
+    free((*that_stack)->stack->buffer);
+    free((*that_stack)->stack);
+    free(*that_stack);
+    #endif
 
     return STACK_OK;
 }
 
 stack_code stack_resize(Stack **that_stack, const double amount)
 {
-    VERIFYING(that_stack);
+    VERIFYING(that_stack, STACK_RESIZE);
 
     if ((*that_stack)->stack->capacity > ((size_t)-1)/2)
     {
@@ -740,12 +746,14 @@ stack_code stack_resize(Stack **that_stack, const double amount)
 
 stack_code stack_push(Stack **that_stack, const stack_elem value)
 {
-    VERIFYING(that_stack);
+    VERIFYING(that_stack, STACK_PUSH);
 
     if ((*that_stack)->stack->length + 1 >= (*that_stack)->stack->capacity)
     {
         stack_resize(that_stack, 2);
+        #ifdef COPYING
         stack_resize(&cage_copy, 2);
+        #endif
     }
 
     (*that_stack)->stack->buffer[(*that_stack)->stack->length++] = value;
@@ -754,18 +762,20 @@ stack_code stack_push(Stack **that_stack, const stack_elem value)
     (*that_stack)->stack->hash_buffer = hashing_buffer((*that_stack));
     (*that_stack)->stack->hash_stack  = hashing_stack ((*that_stack));
 
+    #ifdef COPYING
     cage_copy->stack->buffer[cage_copy->stack->length++] = value;
     cage_copy->stack->buffer[cage_copy->stack->length]   = NAN;
 
     cage_copy->stack->hash_buffer = hashing_buffer(cage_copy);
     cage_copy->stack->hash_stack  = hashing_stack (cage_copy);
+    #endif
 
     return STACK_OK;
 }
 
 stack_code stack_pop(Stack **that_stack, stack_elem *value)
 {
-    VERIFYING(that_stack);
+    VERIFYING(that_stack, STACK_POP);
 
     if ((long long int)((*that_stack)->stack->length) - 1 <= 0)
     {
@@ -777,7 +787,10 @@ stack_code stack_pop(Stack **that_stack, stack_elem *value)
     if ((*that_stack)->stack->length <= (*that_stack)->stack->capacity/2)
     {
         stack_resize(that_stack, 0.5);
+
+        #ifdef COPYING
         stack_resize(&cage_copy, 0.5);
+        #endif
     }
 
     *value = (*that_stack)->stack->buffer[--(*that_stack)->stack->length];
@@ -786,17 +799,19 @@ stack_code stack_pop(Stack **that_stack, stack_elem *value)
     (*that_stack)->stack->hash_buffer = hashing_buffer((*that_stack));
     (*that_stack)->stack->hash_stack  = hashing_stack((*that_stack));
 
+    #ifdef COPYING
     cage_copy->stack->buffer[--cage_copy->stack->length] = NAN;
 
     cage_copy->stack->hash_buffer = hashing_buffer(cage_copy);
     cage_copy->stack->hash_stack  = hashing_stack(cage_copy);
+    #endif
 
     return STACK_OK;
 }
 
 stack_code stack_back(Stack **that_stack, stack_elem *value)
 {
-    VERIFYING(that_stack);
+    VERIFYING(that_stack, STACK_BACK);
 
     if ((long long int)((*that_stack)->stack->length) - 1 <= 0)
     {
