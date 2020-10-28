@@ -1,3 +1,19 @@
+#define READ_MODE         \
+    mode = *program_copy; \
+    program_copy++;       \
+    rip++;
+
+#define READ_VALUE(value);                           \
+    for (int i = 0; i < 8; i++)                      \
+    {                                                \
+        ((char*)(&value))[i] = *program_copy++;      \
+    }                                                \
+    rip += 8;
+
+#define JUMP                                         \
+    program_copy = program_copy - (rip - jump) - 1;  \
+    rip = jump - 1;
+
 DEFINE_COMMANDS ( HLT, 0, 0,
 {
     stack_destruct(&proc.funcs);
@@ -8,22 +24,23 @@ DEFINE_COMMANDS ( HLT, 0, 0,
 
 DEFINE_COMMANDS ( PUSH, 1, 2,
 {
-    mode = *program_copy;
-    program_copy++;
-    rip++;
+    READ_MODE
 
-    if ((int)mode)
+    if ((int)mode && (int)mode < 5)
     {
         stack_push(&proc.stack, proc.registers[(int)mode - 1]);
     }
+    else if ((int)mode == 6)
+    {
+        READ_VALUE(val_last);
+
+        stack_pop(&proc.stack, &val_earl);
+
+        proc.ram[(int)val_last] = val_earl;
+    }
     else
     {
-        for (int i = 0; i < 8; i++)
-        {
-            ((char*)(&val_last))[i] = *program_copy++;
-        }
-
-        rip += 8;
+        READ_VALUE(val_last);
 
         stack_push(&proc.stack, val_last);
     }
@@ -77,14 +94,18 @@ DEFINE_COMMANDS ( COS, 7, 0,
 
 DEFINE_COMMANDS ( POP, 8, 1,
 {
-    mode = *program_copy;
-    program_copy++;
-    rip++;
+    READ_MODE
 
-    if ((int)mode)
+    if ((int)mode && (int)mode < 5)
     {
         stack_pop(&proc.stack, &val_last);
         proc.registers[(int)mode - 1] = val_last;
+    }
+    else if ((int)mode == 6)
+    {
+        READ_VALUE(val_last);
+
+        stack_push(&proc.stack, proc.ram[(int)val_last]);
     }
     else
     {
@@ -122,11 +143,7 @@ DEFINE_COMMANDS ( DUMP, 11, 0,
 
 DEFINE_COMMANDS ( JMP, 12, 1,
 {
-    for (int i = 0; i < 8; i++)
-    {
-        ((char*)(&jump))[i] = *program_copy++;
-    }
-    rip += 8;
+    READ_VALUE(jump);
 
     program_copy = program_copy - (rip - jump) - 1;
     rip = jump - 1;
@@ -134,11 +151,7 @@ DEFINE_COMMANDS ( JMP, 12, 1,
 
 DEFINE_COMMANDS ( JAE, 13, 1,
 {
-    for (int i = 0; i < 8; i++)
-    {
-        ((char*)(&jump))[i] = *program_copy++;
-    }
-    rip += 8;
+    READ_VALUE(jump);
 
     if (proc.stack->stack->length > 1)
     {
@@ -146,10 +159,7 @@ DEFINE_COMMANDS ( JAE, 13, 1,
         stack_pop(&proc.stack, &val_earl);
 
         if (val_last >= val_earl)
-        {
-            program_copy = program_copy - (rip - jump) - 1;
-            rip = jump - 1;
-        }
+            JUMP
 
         stack_push(&proc.stack, val_earl);
         stack_push(&proc.stack, val_last);
@@ -158,11 +168,7 @@ DEFINE_COMMANDS ( JAE, 13, 1,
 
 DEFINE_COMMANDS ( JA, 14, 1,
 {
-    for (int i = 0; i < 8; i++)
-    {
-        ((char*)(&jump))[i] = *program_copy++;
-    }
-    rip += 8;
+    READ_VALUE(jump);
 
     if (proc.stack->stack->length > 1)
     {
@@ -170,10 +176,7 @@ DEFINE_COMMANDS ( JA, 14, 1,
         stack_pop(&proc.stack, &val_earl);
 
         if (val_last > val_earl)
-        {
-            program_copy = program_copy - (rip - jump) - 1;
-            rip = jump - 1;
-        }
+            JUMP
 
         stack_push(&proc.stack, val_earl);
         stack_push(&proc.stack, val_last);
@@ -182,11 +185,7 @@ DEFINE_COMMANDS ( JA, 14, 1,
 
 DEFINE_COMMANDS ( JB, 15, 1,
 {
-    for (int i = 0; i < 8; i++)
-    {
-        ((char*)(&jump))[i] = *program_copy++;
-    }
-    rip += 8;
+    READ_VALUE(jump);
 
     if (proc.stack->stack->length > 1)
     {
@@ -194,10 +193,7 @@ DEFINE_COMMANDS ( JB, 15, 1,
         stack_pop(&proc.stack, &val_earl);
 
         if (val_last < val_earl)
-        {
-            program_copy = program_copy - (rip - jump) - 1;
-            rip = jump - 1;
-        }
+            JUMP
 
         stack_push(&proc.stack, val_earl);
         stack_push(&proc.stack, val_last);
@@ -206,11 +202,7 @@ DEFINE_COMMANDS ( JB, 15, 1,
 
 DEFINE_COMMANDS ( JBE, 16, 1,
 {
-    for (int i = 0; i < 8; i++)
-    {
-        ((char*)(&jump))[i] = *program_copy++;
-    }
-    rip += 8;
+    READ_VALUE(jump);
 
     if (proc.stack->stack->length > 1)
     {
@@ -218,10 +210,7 @@ DEFINE_COMMANDS ( JBE, 16, 1,
         stack_pop(&proc.stack, &val_earl);
 
         if (val_last <= val_earl)
-        {
-            program_copy = program_copy - (rip - jump) - 1;
-            rip = jump - 1;
-        }
+            JUMP
 
         stack_push(&proc.stack, val_earl);
         stack_push(&proc.stack, val_last);
@@ -230,11 +219,7 @@ DEFINE_COMMANDS ( JBE, 16, 1,
 
 DEFINE_COMMANDS ( JE, 17, 1,
 {
-    for (int i = 0; i < 8; i++)
-    {
-        ((char*)(&jump))[i] = *program_copy++;
-    }
-    rip += 8;
+    READ_VALUE(jump);
 
     if (proc.stack->stack->length > 1)
     {
@@ -242,10 +227,7 @@ DEFINE_COMMANDS ( JE, 17, 1,
         stack_pop(&proc.stack, &val_earl);
 
         if (val_last == val_earl)
-        {
-            program_copy = program_copy - (rip - jump) - 1;
-            rip = jump - 1;
-        }
+            JUMP
 
         stack_push(&proc.stack, val_earl);
         stack_push(&proc.stack, val_last);
@@ -254,11 +236,7 @@ DEFINE_COMMANDS ( JE, 17, 1,
 
 DEFINE_COMMANDS ( JNE, 18, 1,
 {
-    for (int i = 0; i < 8; i++)
-    {
-        ((char*)(&jump))[i] = *program_copy++;
-    }
-    rip += 8;
+    READ_VALUE(jump);
 
     if (proc.stack->stack->length > 1)
     {
@@ -266,35 +244,43 @@ DEFINE_COMMANDS ( JNE, 18, 1,
         stack_pop(&proc.stack, &val_earl);
 
         if (val_last != val_earl)
-        {
-            program_copy = program_copy - (rip - jump) - 1;
-            rip = jump - 1;
-        }
+            JUMP
 
         stack_push(&proc.stack, val_earl);
         stack_push(&proc.stack, val_last);
     }
 })
 
-DEFINE_COMMANDS ( CALL, 19, 1,
+DEFINE_COMMANDS ( JM, 19, 1,
 {
-    for (int i = 0; i < 8; i++)
     {
-        ((char*)(&jump))[i] = *program_copy++;
+        READ_VALUE(jump);
+
+        struct tm *local;
+        time_t timer = time(NULL);
+
+        local = localtime(&timer);
+
+        if (local->tm_wday == 1)
+            JUMP
     }
-    rip += 8;
+})
+
+DEFINE_COMMANDS ( CALL, 20, 1,
+{
+    READ_VALUE(jump);
 
     stack_push(&proc.funcs, rip);
 
-    program_copy = program_copy - (rip - jump) - 1;
-    rip = jump - 1;
+    JUMP(1);
 })
 
-DEFINE_COMMANDS ( REV, 20, 0,
+DEFINE_COMMANDS ( REV, 21, 0,
 {
     double jmp = 0;
     stack_pop(&proc.funcs, &jmp);
 
-    program_copy = program_copy - (rip - (long long)jmp) - 1;
-    rip = (long long)jmp - 1;
+    program_copy = program_copy - (rip - (long long)jmp);
+    rip = (long long)jmp;
 })
+
