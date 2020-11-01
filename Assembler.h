@@ -26,46 +26,76 @@ struct assembling_mark{
 typedef struct assembling_mark Marker;
 
 #define MAX_COM_LEN "5"
-const int MAX_COM = 5;
-const int MAX_REG = 4;
+const int MAX_SYMB      = 256;
+const int MAX_REG       = 4;
 
-#define DEFINE_COMMANDS(name, number, arg, coding)                                                 \
-    if (!strcmp(command, #name))                                                                   \
-    {                                                                                              \
-        code = COM_##name;                                                                         \
-        if (j == 2)                                                                                \
-        {                                                                                          \
-            fwrite(&code, sizeof(char), 1, out);                                                   \
-        }                                                                                          \
-                                                                                                   \
-        if (arg > 0)                                                                               \
-        {                                                                                          \
-            error = translate_arg(&first, &command, &code, out, list, &address, j, marks, amount); \
-            if (error != ASM_OK)                                                                   \
-            {                                                                                      \
-                break;                                                                             \
-            }                                                                                      \
-        }                                                                                          \
-        else                                                                                       \
-        {                                                                                          \
-            if (j == 2)                                                                            \
-            {                                                                                      \
-                listing(list, address, code, mode, 0, 0, command, NULL, -1);                       \
-            }                                                                                      \
-            address++;                                                                             \
-        }                                                                                          \
-                                                                                                   \
-        if (j == 2)                                                                                \
-        {                                                                                          \
-            error = check_trash(&first);                                                           \
-            if (error != ASM_OK)                                                                   \
-            {                                                                                      \
-                break;                                                                             \
-            }                                                                                      \
-        }                                                                                          \
-                                                                                                   \
-        flag = 0;                                                                                  \
+const int BEGINNING     = 0;
+const int MIDDLE        = 1;
+
+const int PUSH_VAL      = 0;
+const int PUSH_ADDRESS  = 1;
+
+const int STRING        = 0;
+const int ERROR_READ    = 1;
+const int ADDRESS       = 2;
+
+const int ONE_ARG       = 1;
+const int TWO_ARGS      = 2;
+const int TWO_ARGS_JUMP = 9;
+const int THREE_ARGS    = 10;
+
+const int FIND_MARKS    = 0;
+const int CHECK_MARKS   = 1;
+const int FINAL_WRITE   = 2;
+
+const int ONLY_VAL      = 0;
+const int REG_RAX       = 1;
+const int REG_RBX       = 2;
+const int REG_RCX       = 3;
+const int REG_RDX       = 4;
+const int NO_REG_JUMP   = 5;
+const int ADDRSS        = 6;
+
+#define DEFINE_COMMANDS(name, number, arg, coding, discoding)                                                    \
+    if (!strcmp(command, #name))                                                                                 \
+    {                                                                                                            \
+        char code     = COM_##name;                                                                              \
+        char mode     = 0;                                                                                       \
+                                                                                                                 \
+        if (just_check == FINAL_WRITE)                                                                           \
+        {                                                                                                        \
+            fwrite(&code, sizeof(char), 1, out);                                                                 \
+        }                                                                                                        \
+                                                                                                                 \
+        if (arg > 0)                                                                                             \
+        {                                                                                                        \
+            error = translate_arg(out, list_file, &input, &command, &code, &address, just_check, marks, amount); \
+            if (error != ASM_OK)                                                                                 \
+                break;                                                                                           \
+        }                                                                                                        \
+        else                                                                                                     \
+        {                                                                                                        \
+            if (just_check == FINAL_WRITE)                                                                       \
+            {                                                                                                    \
+                listing(list_file, address, code, mode, 0, 0, command, NULL, -1);                                \
+            }                                                                                                    \
+            address += ONE_ARG;                                                                                  \
+        }                                                                                                        \
+                                                                                                                 \
+        if (just_check == FINAL_WRITE)                                                                           \
+        {                                                                                                        \
+            error = check_trash(&input);                                                                         \
+            if (error != ASM_OK)                                                                                 \
+                break;                                                                                           \
+        }                                                                                                        \
+                                                                                                                 \
+        flag = 0;                                                                                                \
     }
+
+#define ALL_ASSERTIONS           \
+    assert(input      != NULL);  \
+    assert(out        != NULL);  \
+    assert(list_file  != NULL);
 
 /*!
 Reads the text part of code
@@ -77,7 +107,7 @@ Reads the text part of code
 Returns       0                     If the reading went correctly\n
               1                     If nothing was read
 */
-int        read_string (char **str, char *res, int flag);
+int        read_string         (char **str, char *res, int flag);
 
 /*!
 Checks what kind of register was read
@@ -89,17 +119,17 @@ Returns       1                     If it was RAX\n
               4                     If it was RDX\n
               5                     If the format of input was wrong
 */
-double     read_regis  (char *reg);
+double     check_reg           (char *reg);
 
 /*!
 Makes out a header for listing
-@param[in]   *list                  A file to write in
+@param[in]   *list_file                  A file to write in
 */
-void       list_header (FILE *list);
+void       list_header         (FILE *list_file);
 
 /*!
 Makes out a listing for each command
-@param[in]   *list                  A file to write in
+@param[in]   *list_file                  A file to write in
 @param[in]    address               Address of the command in "machine code"
 @param[in]    code                  A code of command
 @param[in]    mode                  A mode of the command (0 if no registers, 1-4 if there is a register)
@@ -109,7 +139,22 @@ Makes out a listing for each command
 @param[in]   *reg                   The name of the register
 @param[in]    dir                   A directory to jump into
 */
-void       listing     (FILE *list, long int address, char code, char mode, int args, double value, char *command, char *reg, long int dir);
+void       listing             (FILE *list_file, long int address, char code, char mode, int args, double value, char *command, char *reg, long int dir);
+
+/*!
+Makes out a listing for each command
+@param[in]   *out                   A file to write in "machine code"
+@param[in]   *list_file                  A file to write in listing
+@param[in]    address               Address of the command in "machine code"
+@param[in]    code                  A code of command
+@param[in]    mode                  A mode of the command (0 if no registers, 1-4 if there is a register)
+@param[in]    args                  Number of arguments for the command
+@param[in]    value                 User's value
+@param[in]   *command               The name of the command
+@param[in]   *reg                   The name of the register
+@param[in]    add
+*/
+void       writing_and_listing (FILE *out, FILE *list_file, long int address, char code, char mode, double value, char *command, char *reg, long int add);
 
 /*!
 Reads the text part of code
@@ -119,16 +164,7 @@ Reads the text part of code
 Returns       ASM_OK                If it was read correctly
               ASM_WRONG_NUM         If the format of input was wrong
 */
-assembl_er read_value  (char **str, double *value);
-
-/*!
-Checks if the end of the line in primary code is correct
-@param[in]  **str                   The buffer to read from
-
-Returns       ASM_OK                If the reading went correctly\n
-              ASM_WRONG_COMMAND     If the input was incorrect
-*/
-assembl_er check_trash (char **str);
+assembl_er read_value          (char **str, double *value, int code_call);
 
 /*!
 Checks if the string is the mark (label)
@@ -140,33 +176,115 @@ Checks if the string is the mark (label)
 Returns       ASM_OK                If it is a mark
               ASM_WRONG_COMMAND     If it is not a mark
 */
-assembl_er check_mark  (char *str, long int *add, Marker *marks, long int amount_marks);
+assembl_er check_mark          (char *str, long int *add, Marker *marks, long int amount_marks);
+
+/*!
+Reads the value and checks if it was just a value or an address for ram-array
+@param[in]   *out                   The file to write "machine code" into
+             *list_file             The file to write listing into
+            **str                   The string to read value from
+             *address               The address of the command in "machine code"
+              mode_push             The indicator of if the address will be read or just value
+              just_check            The indicator if it is just looking for marks or needs listing and machine code
+Returns       ASM_OK                If the reading went correctly\n
+              ASM_WRONG_NUM         If the input of value was incorrect
+*/
+assembl_er read_val_for_push   (FILE *out, FILE *list_file, char **str, long int *address, int mode_push, int just_check);
+
+/*!
+Reads the mark and checks its correctness
+@param[in]   *out                   A file to write "machine code" into
+             *list_file             A file to write listing into
+             *command               The command
+             *reg                   The register
+             *address               Address of the command in "machine code"
+              code                  A code of the command
+              mode                  A mode of the command
+             *marks                 The array with marks
+              amount_marks          The amount of marks in the array of marks
+              just_check            The indicator if it is just looking for marks or needs listing and machine code
+Returns       ASM_OK                If the reading went correctly\n
+              ASM_WRONG_COMMAND     If the input was incorrect
+*/
+assembl_er read_mark           (FILE *out, FILE *list_file, char *command, char *reg, long int *address, char code, char mode, Marker *marks, long int amount_marks, int just_check);
+
+/*!
+Checks if the end of the line in primary code is correct
+@param[in]  **str                   The buffer to read from
+Returns       ASM_OK                If the reading went correctly\n
+              ASM_WRONG_COMMAND     If the input was incorrect
+*/
+assembl_er check_trash         (char **str);
 
 /*!
 Checks if after the command goes value, register or mark
-@param[in]  **str                   String to check
+@param[in]   *out                   A file to write "machine code" into
+             *list_file             A file to write listing into
+            **str                   String to check
              *command               The command to check line after
              *code                  A code of the command
-             *out                   A file to write "machine code" into
-             *list                  A file to write listing into
              *address               Address of the command in "machine code"
               just_check            The indicator if it is just looking for marks or needs listing and machine code
              *marks                 The array with marks
               amount_marks          The amount of marks in the array of marks
 
-Returns       ASM_OK                If everything is read correctly
-              ASM_WRONG_NUM         If a value supposed to be written, but it has a mistake
+Returns       ASM_OK                If everything is read correctly\n
+              ASM_WRONG_NUM         If a value supposed to be written, but it has a mistake\n
               ASM_WRONG_COMMAND     If the wrong command was inputted
 */
-assembl_er translate_arg(char **str, char **command, char *code, FILE *out, FILE *list,
-                         long int *address, int just_check, Marker *marks, long int amount_marks);
+assembl_er translate_arg       (FILE *out, FILE *list_file, char **str, char **command, char *code,
+                                long int *address, int just_check, Marker *marks, long int amount_marks);
+/*!
+Finds the marks and counts them
+@param[in]   *out                   A file to write "machine code" into
+             *list_file             A file to write listing into
+             *input                 The buffer to read from
+              n_lines               The number of lines in user's code
+             *marks                 The array with marks
+             *amount_marks          The amount of marks in the array of marks
+
+Returns       ASM_OK                If everything is read correctly
+              ASM_MEMORY_ERROR      If there were problems with memory
+              ASM_NO_MARKS          If no marks were detected
+*/
+assembl_er find_marks          (FILE *out, FILE *list_file, char *input, const size_t n_lines, Marker **marks);
+
+/*!
+Constructs a structure of current mark
+@param[in]   *command               The command to check line after
+              len                   The length of the mark
+              amount                The amount of marks in the array of marks
+              address               Address of the command in "machine code"
+             *marks                 The array with marks
+
+Returns       ASM_OK                If everything is read correctly
+*/
+assembl_er mark_construct      (char *command, int len, long int amount, long int address, Marker *marks);
+
+/*!
+Writes all marks to the array of them
+@param[in]   *out                   A file to write "machine code" into
+             *list_file             A file to write listing into
+             *input                 The buffer to read from
+              n_lines               The number of lines in user's code
+             *marks                 The array with marks
+             *amount_marks          The amount of marks in the array of marks
+
+Returns       ASM_OK                If everything is read correctly
+              ASM_MEMORY_ERROR      If there were problems with memory
+              ASM_WRONG_COMMAND     If there was wrong command read
+*/
+assembl_er parse_marks         (FILE *out, FILE *list_file, char *input, const size_t n_lines, Marker *marks, long int *amount_marks);
 
 /*!
 Assembles the primary file and makes a binary file for the processor
 Reports about all conversions into "listing.txt"
-@param[in]  **out                   File to put binary code into
-             *first                 The buffer to read from
+@param[in]   *out                   File to put binary code into
+             *list_file             File to write listing into
+             *input                 The buffer to read from
               n_lines               The number of lines in user's code
+             *marks                 The array with marks
+             *amount_marks          The amount of marks in the array of marks
 
 Returns       ASM_OK                If it was read correctly
               ASM_WRONG_NUM         If the format of value input is wrong
@@ -174,7 +292,7 @@ Returns       ASM_OK                If it was read correctly
               ASM_FILE_ERROR        If there is an error with openning the file
               ASM_MEMORY_ERROR      If mamory access denied
 */
-assembl_er assembling  (FILE *out, char *input, const size_t n_lines);
+assembl_er assembling          (FILE *out, FILE *list_file, char *input, const size_t n_lines, Marker *marks, long int *amount);
 
 /*!
 Assembles the primary file and makes a binary file for the processor
@@ -187,7 +305,7 @@ Returns       ASM_OK                If it was read correctly
               ASM_FILE_ERROR        If there is an error with openning the file
               ASM_MEMORY_ERROR      If mamory access denied
 */
-assembl_er processing  (const char *file_name);
+assembl_er processing          (const char *file_name);
 
 
 int read_string (char **str, char *res, int flag)
@@ -207,7 +325,11 @@ int read_string (char **str, char *res, int flag)
             *(*str)++;
         }
 
-    while (counter < MAX_COM && (isalnum(**str) || (**str == ':') || (**str == '#')))//убрать константу максимума
+    char symbol = **str;
+    if (symbol == '[')
+        return ADDRESS;
+
+    while (counter < MAX_SYMB && (isalnum(**str) || (**str == ':') || (**str == '#')))
     {
         *res = **str;
         res++;
@@ -217,79 +339,145 @@ int read_string (char **str, char *res, int flag)
     *(res++) = '\0';
 
     if (!counter)
-        return 1;
+        return ERROR_READ;
 
-    return 0;
+    return STRING;
 }
 
-double read_regis (char *reg)
+double check_reg (char *reg)
 {
     if      (!strcmp(reg, "RAX"))
-        return 1;
+        return REG_RAX;
     else if (!strcmp(reg, "RBX"))
-        return 2;
+        return REG_RBX;
     else if (!strcmp(reg, "RCX"))
-        return 3;
+        return REG_RCX;
     else if (!strcmp(reg, "RDX"))
-        return 4;
+        return REG_RDX;
     else
-        return 5;
+        return NO_REG_JUMP;
 }
 
-void list_header (FILE *list)
+void list_header (FILE *list_file)
 {
-    fprintf(list, "LISTING %82c\n", ' ');
-    fprintf(list, "ADDRS|%3cSIMPLE CODE%3c|%21cBYTE CODE%22c|%4cCODE%5c\n", ' ', ' ', ' ', ' ', ' ', ' ');
-    fprintf(list, "%95c\n", '_');
+    fprintf(list_file, "LISTING %82c\n", ' ');
+    fprintf(list_file, "ADDRS|%3cSIMPLE CODE%3c|%21cBYTE CODE%22c|%4cCODE%5c\n", ' ', ' ', ' ', ' ', ' ', ' ');
+    fprintf(list_file, "%95c\n", '_');
 }
 
-void listing (FILE *list, long int address, char code, char mode, int args, double value, char *command, char *reg, long int dir)
+void listing (FILE *list_file, long int address, char code, char mode, int args, double value, char *command, char *reg, long int dir)
 {
     if (code == 0)
     {
-        fprintf(list, "%04x | %2d %12c | %016llx %33c | %5s\n",
-                       address, code, ' ', (double)code, ' ', command);
+        fprintf(list_file, "%04x | %2d %12c | %016llx %33c | %5s\n",
+                       (unsigned int)address, code, ' ', (double)code, ' ', command);
     }
     else if (!args)
     {
-        fprintf(list, "%04x | %2d %12c | %016llx %33c | %5s\n",
-                       address, code, ' ', (double)code, ' ', command);
+        fprintf(list_file, "%04x | %2d %12c | %016llx %33c | %5s\n",
+                       (unsigned int)address, code, ' ', (double)code, ' ', command);
     }
     else if (args == 1)
     {
         if (dir > 0)
-            fprintf(list, "%04x | %2d %ld %10c | %016llx %016llx %16c | %5s %4d\n",
-                        address, code, mode, ' ', (double)code, (double)mode, ' ', command, dir);
+            fprintf(list_file, "%04x | %2d %ld %10c | %016llx %016llx %16c | %5s %4d\n",
+                        (unsigned int)address, code, mode, ' ', (double)code, (double)mode, ' ', command, dir);
         else
-            fprintf(list, "%04x | %2d %ld %10c | %016llx %016llx %16c | %5s %4s\n",
-                        address, code, mode, ' ', (double)code, (double)mode, ' ', command, reg);
+            fprintf(list_file, "%04x | %2d %ld %10c | %016llx %016llx %16c | %5s %4s\n",
+                        (unsigned int)address, code, mode, ' ', (double)code, (double)mode, ' ', command, reg);
     }
     else
     {
-        fprintf(list, "%04x | %2d %d %10lg | %016llx %016llx %016llx | %5s %04d %lg\n",
-                        address, code, mode, value, (double)code, (double)mode, value, command, mode, value);
+        fprintf(list_file, "%04x | %2d %d %10lg | %016llx %016llx %016llx | %5s %04d %lg\n",
+                        (unsigned int)address, code, mode, value, (double)code, (double)mode, value, command, mode, value);
     }
 }
 
-assembl_er read_value  (char **str, double *value)
+void writing_and_listing (FILE *out, FILE *list_file, long int address, char code, char mode, double value, char *command, char *reg, long int add)
+{
+    if (mode == NO_REG_JUMP)
+    {
+        fwrite(&add, sizeof(long long), 1, out);
+        listing(list_file, address, code, mode, 1, value, command, reg, add);
+    }
+    else if (mode == ADDRSS)
+    {
+        fwrite(&mode,  sizeof(char), 1, out);
+        fwrite(&value, sizeof(double), 1, out);
+
+        listing(list_file, address, code, mode, 2, value, command, reg, -1);
+    }
+    else if (mode > ONLY_VAL)
+    {
+        fwrite(&mode, sizeof(char), 1, out);
+        listing(list_file, address, code, mode, 1, value, command, reg, -1);
+    }
+    else if (mode == ONLY_VAL)
+    {
+        fwrite(&mode,  sizeof(char), 1, out);
+        fwrite(&value, sizeof(double), 1, out);
+
+        listing(list_file, address, code, mode, 2, value, command, reg, -1);
+    }
+}
+
+assembl_er read_value  (char **str, double *value, int code_call)
 {
     int code_val = 0;
     int trailing_index = 0;
+
+    char symbol = EOF;
+
+    if (code_call)
+    {
+        while (**str == ' ')
+            *(*str)++;
+        sscanf(*str, "%c", &symbol);
+        if (symbol != '[')
+        {
+            return ASM_WRONG_NUM;
+        }
+        *(*str)++;
+    }
 
     sscanf(*str, "%lg%n", value, &trailing_index);
 
     int count = 0;
     *str += trailing_index;
 
+    while (**str == ' ')
+            *(*str)++;
+
+    symbol = **str;
+    if (symbol == ']' && code_call && trailing_index)
+        (*str)++;
+    else if (code_call)
+    {
+        return ASM_WRONG_NUM;
+    }
+
+    int counter = 0;
+
     while(**str != ';' && **str != '\n' && **str != '\0' && **str != '\r')
     {
-        if (!isspace(**str))
+        if (**str == ']' && !counter)
+        {
+            counter++;
+        }
+        else if (**str == ']' && counter)
         {
             code_val = 1;
             break;
         }
-            (*str)++;
+
+        if (!isspace(**str) && (**str != ']'))
+        {
+            code_val = ERROR_READ;
+            break;
+        }
+        (*str)++;
     }
+
 
     if (code_val)
     {
@@ -299,22 +487,10 @@ assembl_er read_value  (char **str, double *value)
     return ASM_OK;
 }
 
-assembl_er check_trash (char **str)
-{
-    int counter = 0;
-
-    if (!isspace(**str) && (**str != ';') && (**str != '\r') && (**str != '\n') && (**str != '\0'))
-    {
-        return ASM_WRONG_COMMAND;
-    }
-
-    return ASM_OK;
-}
-
 assembl_er check_mark  (char *str, long int *add, Marker *marks, long int amount_marks)
 {
-    char *copy = (char*) calloc(MAX_COM, sizeof(char));
-    for (int j = 0; j < MAX_COM; j++)
+    char *copy = (char*) calloc(MAX_SYMB, sizeof(char));
+    for (int j = 0; j < MAX_SYMB; j++)
     {
         copy[j] = str[j + 1];
         if (str[j + 1] == '\0')
@@ -345,204 +521,261 @@ assembl_er check_mark  (char *str, long int *add, Marker *marks, long int amount
     }
 }
 
-assembl_er translate_arg(char **str, char **command, char *code, FILE *out, FILE *list, long int *address, int just_check, Marker *marks, long int amount_marks)
+assembl_er read_val_for_push (FILE *out, FILE *list_file, char **str, long int *address, int mode_push, int just_check)
 {
-    int    mode           = 0;
-    double value          = 0;
-    int    trailing_index = 0;
+    double value = 0;
 
-    char *reg = (char*) calloc(MAX_COM, sizeof(char));
-    if (!reg)
+    assembl_er read_val = read_value(str, &value, mode_push);
+
+    int mode = 0;
+    int code = 1;
+
+    if (mode_push == PUSH_ADDRESS)
+        mode = 6;
+
+    if (read_val != ASM_OK)
     {
-        return ASM_MEMORY_ERROR;
+        return read_val;
     }
 
+    if (just_check == FINAL_WRITE)
+        writing_and_listing(out, list_file, *address, code, mode, value, "PUSH", NULL, 0);
+    (*address) += THREE_ARGS;
+
+    return read_val;
+}
+
+assembl_er read_mark (FILE *out, FILE *list_file, char *command, char *reg, long int *address, char code, char mode, Marker *marks, long int amount_marks, int just_check)
+{
+    long int add  = 0;
+
+    assembl_er checking_mark = ASM_OK;
+
+    if (just_check == FINAL_WRITE)
+        checking_mark = check_mark(reg, &add, marks, amount_marks);
+
+    if (checking_mark == ASM_OK)
+    {
+        if (just_check == FINAL_WRITE)
+            writing_and_listing(out, list_file, *address, code, mode, 0, command, reg, add);
+        (*address) += TWO_ARGS_JUMP;
+    }
+    else
+    {
+        free(reg);
+            return ASM_WRONG_COMMAND;
+    }
+
+    free(reg);
+    return checking_mark;
+}
+
+assembl_er check_trash (char **str)
+{
+    int counter = 0;
+
+    if (!isspace(**str) && (**str != ';') && (**str != '\r') && (**str != '\n') && (**str != '\0'))
+    {
+        return ASM_WRONG_COMMAND;
+    }
+
+    return ASM_OK;
+}
+
+assembl_er translate_arg(FILE *out, FILE *list_file, char **str, char **command, char *code, long int *address, int just_check, Marker *marks, long int amount_marks)
+{
+    double value = 0;
+
+    int    trailing_index = 0;
     sscanf(*str, "%lg%n", &value, &trailing_index);
+
+    assembl_er result = ASM_OK;
+
     if (!trailing_index)
     {
-        assembl_er error = ASM_OK;
+        char *reg = (char*) calloc(MAX_SYMB, sizeof(char));
+        if (!reg)
+            result = ASM_MEMORY_ERROR;
 
-        int read_reg = read_string(str, reg, 1);
-        if (!read_reg)
+        assembl_er error = ASM_OK;
+        char mode        = ONLY_VAL;
+
+        int  read_reg = read_string(str, reg, MIDDLE);
+        if (read_reg == STRING)
         {
-            mode = read_regis(reg);
+            mode =  check_reg(reg);
             if (mode > MAX_REG)
             {
-                if (reg[0] == '#' && *code >= 12)
-                {
-                    long int add  = 0;
-
-                    assembl_er checking_mark = ASM_OK;
-
-                    if (just_check == 2)
-                        checking_mark = check_mark(reg, *address, &add, marks, amount_marks);
-
-                    if (checking_mark == ASM_OK)
-                    {
-                        if (just_check == 2)
-                        {
-                            fwrite(&add, sizeof(long long), 1, out);
-                            listing(list, *address, *code, mode, 1, value, *command, reg, add);
-                        }
-                        (*address) += 9;
-                    }
-                    else
-                    {
-                        free(reg);
-                        return ASM_WRONG_COMMAND;
-                    }
-
-                    free(reg);
-                    return checking_mark;
-                }
+                if (reg[0] == '#' && *code >= COM_JMP)
+                    result = read_mark(out, list_file, *command, reg, address, *code, mode, marks, amount_marks, just_check);
                 else
                 {
                     free(reg);
-                    return ASM_WRONG_COMMAND;
+                    result = ASM_WRONG_COMMAND;
+                }
+            }
+            else
+            {
+                if (just_check == FINAL_WRITE)
+                    writing_and_listing(out, list_file, *address, *code, mode, value, *command, reg, 0);
+                (*address) += TWO_ARGS;
+            }
+        }
+        else if (read_reg == ADDRESS)
+            result = read_val_for_push(out, list_file, str, address, PUSH_ADDRESS, just_check);
+     }
+     else if (*code == COM_PUSH)
+     {
+        result = read_val_for_push(out, list_file, str, address, PUSH_VAL, just_check);
+     }
+     else
+        result = ASM_WRONG_COMMAND;
+
+     return result;
+}
+
+assembl_er find_marks(FILE *out, FILE *list_file, char *input, const size_t n_lines, Marker **marks)
+{
+    ALL_ASSERTIONS
+
+    assembl_er error = ASM_OK;
+
+    long int amount  = 0;
+    long int address = 0;
+
+    int just_check = FIND_MARKS;
+
+    char *command = (char*) calloc(MAX_SYMB, sizeof(char));
+    if (!command)
+        return ASM_MEMORY_ERROR;
+
+    for (long int i = 0; i < n_lines - 1; i++)
+    {
+        int read_com = read_string(&input, command, 0);
+
+        if (read_com == 0)
+        {
+            for (int k = 0; k < MAX_SYMB; k++)
+            {
+                if (command[k] == ':' && command[k + 1] == '\0')
+                {
+                    amount++;
+                    break;
                 }
             }
         }
+    }
+    free(command);
 
-        if (just_check == 2)
-        {
-            if (mode > 0 && mode < 12)
-            {
-                fwrite(&mode, sizeof(char), 1, out);
-                listing(list, *address, *code, mode, 1, value, *command, reg, -1);
-            }
-            else if (!mode)
-            {
-                listing(list, *address, *code, mode, 1, value, *command, NULL, -1);
-            }
-        }
-        (*address) += 2;
-     }
-     else if (*code == 1)
-     {
-        assembl_er read_val = read_value(str, &value);
+    if (amount)
+        *marks = (Marker*) calloc(amount, sizeof(Marker));
+    else
+        return ASM_NO_MARKS;
 
-        if (read_val != ASM_OK)
-        {
-            free(reg);
-            return read_val;
-        }
-        mode = 0;
-
-        if (just_check == 2)
-        {
-            fwrite(&mode,  sizeof(char), 1, out);
-            fwrite(&value, sizeof(double), 1, out);
-
-            listing(list, *address, *code, mode, 2, value, *command, reg, -1);
-        }
-        (*address) += 10;
-      }
-      else
-      {
-        free(reg);
-        return ASM_WRONG_COMMAND;
-      }
-
-      free(reg);
-
-      return ASM_OK;
+    return error;
 }
 
-assembl_er assembling (FILE *out, char *input, const size_t n_lines)
+assembl_er mark_construct(char *command, int len, long int amount, long int address, Marker *marks)
 {
-    assert(input != NULL);
-    assert(out   != NULL);
+    command[len] = '\0';
+    marks[amount].num       = amount;
+    marks[amount].where     = address;
+    marks[amount].mark_name = (char*) calloc(len + 1, sizeof(char));
 
-    FILE *list = fopen("listing.txt", "wb");
-    list_header(list);
+    if (marks[amount].mark_name == NULL)
+        return ASM_MEMORY_ERROR;
+
+    int  l = 0;
+    for (l; l < len; l++)
+        marks[amount].mark_name[l] = command[l];
+    marks[amount].mark_name[l] = '\0';
+
+    return ASM_OK;
+}
+
+assembl_er parse_marks(FILE *out, FILE *list_file, char *input, const size_t n_lines, Marker *marks, long int *amount_marks)
+{
+    ALL_ASSERTIONS
+
+    assembl_er error = ASM_OK;
+
+    char *command = (char*) calloc(MAX_SYMB, sizeof(char));
+    if (!command)
+        return ASM_MEMORY_ERROR;
+
+    long int amount  = 0;
     long int address = 0;
 
-    long int amount = 0;
+    int just_check = CHECK_MARKS;
+
+    for (long int i = 0; i < n_lines - 1; i++)
+    {
+        int read_com = read_string(&input, command, BEGINNING);
+
+        int flag = 1;
+
+        if (read_com == 0)
+        {
+            #include "Commands.h"
+            long int flag_mark = 0;
+            if (flag)
+            {
+                for (int k = 0; k < MAX_SYMB; k++)
+                {
+                    if (command[k] == ':')
+                    {
+                        flag_mark = 1;
+                        error = mark_construct(command, k, amount, address, marks);
+
+                        if (error != ASM_OK)
+                            return error;
+
+                        amount++;
+                        break;
+                    }
+                }
+            }
+            if (flag && !flag_mark)
+                return ASM_WRONG_COMMAND;
+        }
+    }
+    free(command);
+
+    *amount_marks = amount;
+
+    return error;
+}
+
+assembl_er assembling (FILE *out, FILE *list_file, char *input, const size_t n_lines, Marker *marks, long int *amount_marks)
+{
+    ALL_ASSERTIONS
+
+    long int address = 0;
+    long int amount  = *amount_marks;
+
+    int just_check = FINAL_WRITE;
 
     assembl_er error = ASM_OK;
 
     char symb = EOF;
 
-    char *command = (char*) calloc(MAX_COM, sizeof(char));
+    char *command = (char*) calloc(MAX_SYMB, sizeof(char));
     if (!command)
+        return ASM_MEMORY_ERROR;
+
+    for (long int i = 0; i < n_lines - 1; i++)
     {
-        error = ASM_MEMORY_ERROR;
-        return error;
-    }
+        int read_com = read_string(&input, command, BEGINNING);
 
-    Marker *marks = NULL;
+        int flag = 0;
 
-    for (int j = 0; j < 3; j++)
-    {
-        char *first = input;
-        for (long int i = 0; i < n_lines - 1; i++)
+        if (read_com == 0)
         {
-            int read_com = read_string(&first, command, 0);
-
-            char   code     = 0;
-            char   mode     = 0;
-            double value    = 0;
-
-            int flag = 1;
-
-            if (read_com == 0)
-            {
-                #include "Commands.h"
-                long int flag_mark = 0;
-                if (flag)
-                {
-                    for (int k = 0; k < MAX_COM; k++)
-                    {
-                        if (command[k] == ':')
-                        {
-                            flag_mark = 1;
-                            if (j == 1)
-                            {
-                                command[k] = '\0';
-
-                                marks[amount].num       = amount;
-                                marks[amount].where     = address;
-                                marks[amount].mark_name = (char*) calloc(k + 1, sizeof(char));
-                                int l = 0;
-                                for (l = 0; l < k; l++)
-                                    marks[amount].mark_name[l] = command[l];
-                                marks[amount].mark_name[l] = '\0';
-                            }
-                            amount++;
-                            break;
-                        }
-                    }
-
-                    if (!flag_mark)
-                    {
-                        error = ASM_WRONG_COMMAND;
-                        break;
-                    }
-                }
-            }
+            #include "Commands.h"
         }
-        if (!j)
-        {
-            if (!amount)
-            {
-                j++;
-            }
-            else
-            {
-                marks = (Marker*) calloc(amount, sizeof(Marker));
-            }
-        }
-        address = 0;
-
-        if (!j)
-            amount = 0;
     }
 
     free(command);
-    if (amount)
-        free(marks);
-
-    fclose(list);
 
     return error;
 }
@@ -560,7 +793,27 @@ assembl_er processing (const char *file_name)
     size_t     len_code      = 0;
 
     FILE      *out = fopen("second.xex", "wb");
-    assembl_er err = assembling(out, first, n_lines);
+
+    FILE *list_file = fopen("listing.txt", "wb");
+    list_header(list_file);
+
+    Marker  *marks  = NULL;
+    long int amount = 0;
+
+    assembl_er err = find_marks(out, list_file, first, n_lines, &marks);
+
+    if (err == ASM_NO_MARKS)
+    {
+        err = assembling(out, list_file, first, n_lines, marks, &amount);
+    }
+    else if (err == ASM_OK)
+    {
+        err = parse_marks(out, list_file, first, n_lines, marks, &amount);
+
+        if (err == ASM_OK)
+            err = assembling(out, list_file, first, n_lines, marks, &amount);
+    }
+
 
     if (err != ASM_OK)
     {
@@ -593,6 +846,8 @@ assembl_er processing (const char *file_name)
     }
 
     free(first);
+
+    fclose(list_file);
     fclose(out);
 
     return err;
