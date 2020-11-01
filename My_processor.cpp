@@ -1,31 +1,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "Stack.h"
+#include <time.h>
+#include "PolyStack.h"
 #include "Assembler.h"
+#include "Disassembler.h"
 
 #define COMPILATING
 
-#define DEFINE_COMMANDS(name, number, args, coding) \
-        case number:                                \
-                                                    \
-            coding;                                 \
-                                                    \
+#define DEFINE_COMMANDS(name, number, args, coding, discoding) \
+        case number:                                           \
+                                                               \
+            coding;                                            \
+                                                               \
             break;
 
 
 typedef struct Processor_on_stack Processor;
 
 struct Processor_on_stack{
-    Stack *stack;
-    Stack *funcs;
-    double registers[4];
+    Stack  *stack;
+    Stack  *funcs;
+    double  registers[4];
+    double *ram;
 };
 
 const char *EXECUTABLE_FILE = "second.xex";
-const char *NAME            = "disc_func.xax";
+const char *NAME            = "ramfile.xax";
 
 char *read_program     (size_t *length);
+
 void  start_perfomance (char *program, size_t length);
 
 int main (int argc, const char **argv)
@@ -40,7 +44,11 @@ int main (int argc, const char **argv)
         com = 1;
     }
     else
+    {
         error = processing(NAME);
+    }
+
+    start_dis();
     #endif
 
     if (error == ASM_OK)
@@ -80,12 +88,14 @@ void start_perfomance (char *program, size_t length)
     Processor proc = {};
     proc.stack = stack_new(2);
     proc.funcs = stack_new(2);
+    proc.ram   = (double*) calloc(1000, sizeof(double));
+
     for (int i = 0; i < 4; i++)
     {
         proc.registers[i] = 0;
     }
 
-    for (int rip = 0; rip < length/sizeof(char); rip++)
+    for (int rip = 0; rip < length/sizeof(char) - 1; rip++)
     {
         char val = *program_copy;
 

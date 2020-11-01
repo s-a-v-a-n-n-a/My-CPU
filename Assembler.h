@@ -19,7 +19,7 @@
 
 struct assembling_mark{
     int       num;
-    long long where;
+    long int  where;
     char     *mark_name;
 };
 
@@ -314,15 +314,15 @@ int read_string (char **str, char *res, int flag)
 
     if (flag)
         while (**str == ' ')
-            *(*str)++;
+            (*str)++;
     else
         while (isspace(**str) || (**str) == ';')
         {
             while (**str != '\n')
             {
-                *(*str)++;
+                (*str)++;
             }
-            *(*str)++;
+            (*str)++;
         }
 
     char symbol = **str;
@@ -367,24 +367,26 @@ void list_header (FILE *list_file)
 
 void listing (FILE *list_file, long int address, char code, char mode, int args, double value, char *command, char *reg, long int dir)
 {
+    char space = ' ';
+
     if (code == 0)
     {
         fprintf(list_file, "%04x | %2d %12c | %016llx %33c | %5s\n",
-                       (unsigned int)address, code, ' ', (double)code, ' ', command);
+                       (unsigned int)address, code, space, (double)code, space, command);
     }
     else if (!args)
     {
         fprintf(list_file, "%04x | %2d %12c | %016llx %33c | %5s\n",
-                       (unsigned int)address, code, ' ', (double)code, ' ', command);
+                       (unsigned int)address, code, space, (double)code, space, command);
     }
     else if (args == 1)
     {
         if (dir > 0)
             fprintf(list_file, "%04x | %2d %ld %10c | %016llx %016llx %16c | %5s %4d\n",
-                        (unsigned int)address, code, mode, ' ', (double)code, (double)mode, ' ', command, dir);
+                        (unsigned int)address, code, mode, space, (double)code, (double)mode, space, command, dir);
         else
             fprintf(list_file, "%04x | %2d %ld %10c | %016llx %016llx %16c | %5s %4s\n",
-                        (unsigned int)address, code, mode, ' ', (double)code, (double)mode, ' ', command, reg);
+                        (unsigned int)address, code, mode, space, (double)code, (double)mode, space, command, reg);
     }
     else
     {
@@ -527,8 +529,8 @@ assembl_er read_val_for_push (FILE *out, FILE *list_file, char **str, long int *
 
     assembl_er read_val = read_value(str, &value, mode_push);
 
-    int mode = 0;
-    int code = 1;
+    char mode = 0;
+    char code = 1;
 
     if (mode_push == PUSH_ADDRESS)
         mode = 6;
@@ -686,7 +688,7 @@ assembl_er mark_construct(char *command, int len, long int amount, long int addr
         return ASM_MEMORY_ERROR;
 
     int  l = 0;
-    for (l; l < len; l++)
+    for (; l < len; l++)
         marks[amount].mark_name[l] = command[l];
     marks[amount].mark_name[l] = '\0';
 
@@ -708,7 +710,7 @@ assembl_er parse_marks(FILE *out, FILE *list_file, char *input, const size_t n_l
 
     int just_check = CHECK_MARKS;
 
-    for (long int i = 0; i < n_lines - 1; i++)
+    for (unsigned int i = 0; i < n_lines - 1; i++)
     {
         int read_com = read_string(&input, command, BEGINNING);
 
@@ -757,13 +759,11 @@ assembl_er assembling (FILE *out, FILE *list_file, char *input, const size_t n_l
 
     assembl_er error = ASM_OK;
 
-    char symb = EOF;
-
     char *command = (char*) calloc(MAX_SYMB, sizeof(char));
     if (!command)
         return ASM_MEMORY_ERROR;
 
-    for (long int i = 0; i < n_lines - 1; i++)
+    for (unsigned int i = 0; i < n_lines - 1; i++)
     {
         int read_com = read_string(&input, command, BEGINNING);
 
@@ -819,6 +819,10 @@ assembl_er processing (const char *file_name)
     {
         switch (err)
         {
+            case ASM_OK:
+
+                break;
+
             case ASM_WRONG_NUM:
 
                 printf("Undefined input\n");

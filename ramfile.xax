@@ -1,0 +1,7 @@
+PUSH 7
+PUSH 8
+OUT
+PUSH [10]
+POP [10]
+OUT
+HLT
