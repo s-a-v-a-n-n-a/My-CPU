@@ -561,8 +561,8 @@ stack_code stack_verifier (Stack **that_stack)
         }
         else if (!(flag_hash_stack && flag_hash_copy && flag_hash_stack_buf) && flag_hash_copy_buf)
         {
-            long int i       = 1;
-            long int new_len = 0;
+            long int i        = 1;
+            long long new_len = 0;
 
             while(!isnan((float)(*that_stack)->stack_copy->buffer[i]))
             {
@@ -579,8 +579,8 @@ stack_code stack_verifier (Stack **that_stack)
         }
         else if (!(flag_hash_stack && flag_hash_copy && flag_hash_copy_buf) && flag_hash_stack_buf)
         {
-            long int i       = 1;
-            long int new_len = 0;
+            long int  i       = 1;
+            long long new_len = 0;
 
             while(!isnan((float)(*that_stack)->stack->buffer[i]))
             {
@@ -622,12 +622,14 @@ Stack *stack_new(size_t size)
         {
             stack_destruct_inside(&(cage->stack));
             free(cage);
+            cage = NULL;
         }
 
         if (stack_construct(&(cage->stack_copy), size) == STACK_NO_CONSTRUCT)
         {
             stack_destruct_inside(&(cage->stack_copy));
             free(cage);
+            cage = NULL;
         }
     }
     return cage;
@@ -665,11 +667,11 @@ stack_code stack_destruct(Stack **that_stack)
 {
     VERIFYING_DESTRUCT(that_stack);
 
-    if (*that_stack)
-        free(*that_stack);
-
     stack_destruct_inside(&(*that_stack)->stack);
     stack_destruct_inside(&(*that_stack)->stack_copy);
+
+    if (*that_stack)
+        free(*that_stack);
 
     return STACK_OK;
 }

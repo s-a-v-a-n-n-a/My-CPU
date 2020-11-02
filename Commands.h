@@ -11,8 +11,8 @@
     rip += 8;
 
 #define JUMP                                         \
-    program_copy = program_copy - (rip - jump) - 1;  \
-    rip = jump - 1;
+    program_copy = program_copy - (rip - (long long)jump) - 1;  \
+    rip = (long long)jump - 1;
 
 #define PRINT_DISASM(text); \
     if (i == DISASSEMBLING) \
@@ -41,20 +41,14 @@
                                                         \
     if (i == WRITING)                                   \
     {                                                   \
-        const int NO_SUCH  = 0;                         \
-        const int WAS_SUCH = 1;                         \
-        int check = NO_SUCH;                            \
-        for (long long k = 0; k < n_labels - 1; k++)    \
-            if (labels[k] == jump)                      \
-                check = WAS_SUCH;                       \
-        if (check == NO_SUCH)                           \
-            labels[n_labels - 1] = jump;                \
+        labels[n_labels - 1] = jump;                    \
     }
 
 
 
 #define JUMP_STATEMENT(operator);                       \
     READ_VALUE(jump);                                   \
+    printf("jump %lg\n", jump);                         \
                                                         \
     if (proc.stack->stack->length > 1)                  \
     {                                                   \
@@ -69,15 +63,6 @@
         stack_push(&proc.stack, val_earl);              \
         stack_push(&proc.stack, val_last);              \
     }
-
-/*#define CONSTS                      \
-    const int ONLY_VAL      = 0;    \
-    const int REG_RAX       = 1;    \
-    const int REG_RBX       = 2;    \
-    const int REG_RCX       = 3;    \
-    const int REG_RDX       = 4;    \
-    const int NO_REG_JUMP   = 5;    \
-    const int ADDRSS        = 6;  */
 
 DEFINE_COMMANDS ( HLT, 0, 0,
 {
@@ -94,8 +79,6 @@ DEFINE_COMMANDS ( HLT, 0, 0,
 DEFINE_COMMANDS ( PUSH, 1, 2,
 {
     READ_MODE
-
-    //CONSTS
 
     if ((int)mode && (int)mode < NO_REG_JUMP)
     {

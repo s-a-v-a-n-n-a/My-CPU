@@ -10,6 +10,7 @@
 
 #define DEFINE_COMMANDS(name, number, args, coding, discoding) \
         case number:                                           \
+            printf("%s\n", #name);                             \
                                                                \
             coding;                                            \
                                                                \
@@ -63,7 +64,7 @@ int main (int argc, const char **argv)
     }
     else
         system("pause");
-
+    system("pause");
     return 0;
 }
 
@@ -97,6 +98,7 @@ void start_perfomance (char *program, size_t length)
                                                                                 //..\\  ||        ||   //..\\  ||
     for (long long rip = 0; rip < (long long)(length/sizeof(char)) - 1; rip++) // ()//  //         \\ // () || ||
     {
+        printf("%04x\n", rip);
         char val = *program_copy;
 
         char mode = 0;

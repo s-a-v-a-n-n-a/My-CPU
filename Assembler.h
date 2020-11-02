@@ -177,7 +177,7 @@ Checks if the string is the mark (label)
 Returns       ASM_OK                If it is a mark
               ASM_WRONG_COMMAND     If it is not a mark
 */
-assembl_er check_mark          (char *str, long int *add, Marker *marks, long int amount_marks);
+assembl_er check_mark          (char *str, long long *add, Marker *marks, long int amount_marks);
 
 /*!
 Reads the value and checks if it was just a value or an address for ram-array
@@ -363,7 +363,9 @@ void list_header (FILE *list_file)
 {
     fprintf(list_file, "LISTING %82c\n", ' ');
     fprintf(list_file, "ADDRS|%3cSIMPLE CODE%3c|%21cBYTE CODE%22c|%4cCODE%5c\n", ' ', ' ', ' ', ' ', ' ', ' ');
-    fprintf(list_file, "%95c\n", '_');
+    
+    for (int i = 0; i < 95; i++) fputc('_', list_file);
+    fputc('\n', list_file);
 }
 
 void listing (FILE *list_file, long int address, char code, char mode, int args, double value, char *command, char *reg, long int dir)
@@ -372,27 +374,27 @@ void listing (FILE *list_file, long int address, char code, char mode, int args,
 
     if (code == 0)
     {
-        fprintf(list_file, "%04x | %2d %12c | %016f %33c | %5s\n",
-                       (unsigned int)address, (unsigned)code, space, (double)code, space, command);
+        fprintf(list_file, "%04x | %2d %12c | %016llx %33c | %5s\n",
+                       (unsigned int)address, (unsigned)code, space, *((long long*)&code), space, command);
     }
     else if (!args)
     {
-        fprintf(list_file, "%04x | %2d %12c | %016f %33c | %5s\n",
-                       (unsigned int)address, (unsigned)code, space, (double)code, space, command);
+        fprintf(list_file, "%04x | %2d %12c | %016llx %33c | %5s\n",
+                       (unsigned int)address, (unsigned)code, space, *((long long*)&code), space, command);
     }
     else if (args == 1)
     {
         if (dir > 0)
-            fprintf(list_file, "%04x | %2d %d %10c | %016f %016f %16c | %5s %4ld\n",
-                        (unsigned int)address, code, mode, space, (double)code, (double)mode, space, command, dir);
+            fprintf(list_file, "%04x | %2d %d %10d | %016llx %016llx %16llx | %5s %4ld\n",
+                        (unsigned int)address, code, mode, dir, *((long long*)&code), *((long long*)&mode), *((long long*)&dir), command, dir);
         else
-            fprintf(list_file, "%04x | %2d %d %10c | %016f %016f %16c | %5s %4s\n",
-                        (unsigned int)address, code, mode, space, (double)code, (double)mode, space, command, reg);
+            fprintf(list_file, "%04x | %2d %d %10c | %016llx %016llx %16c | %5s %4s\n",
+                        (unsigned int)address, code, mode, space, *((long long*)&code), *((long long*)&mode), space, command, reg);
     }
     else
     {
-        fprintf(list_file, "%04x | %2d %d %10lg | %016f %016f %016f | %5s %04d %lg\n",
-                        (unsigned int)address, code, mode, value, (double)code, (double)mode, value, command, mode, value);
+        fprintf(list_file, "%04x | %2d %d %10lg | %016llx %016llx %016llx | %5s %4d %lg\n",
+                        (unsigned int)address, code, mode, value, *((long long*)&code), *((long long*)&mode), value, command, mode, value);
     }
 }
 
@@ -401,6 +403,7 @@ void writing_and_listing (FILE *out, FILE *list_file, long int address, char cod
     if (mode == NO_REG_JUMP)
     {
         fwrite(&add, sizeof(long long), 1, out);
+        printf("YAAAAAAAAAAAAAAAAAAZ %lld\n", add);
         listing(list_file, address, code, mode, 1, value, command, reg, add);
     }
     else if (mode == ADDRSS)
@@ -496,7 +499,7 @@ assembl_er read_value  (char **str, double *value, int code_call)
     return ASM_OK;
 }
 
-assembl_er check_mark  (char *str, long int *add, Marker *marks, long int amount_marks)
+assembl_er check_mark  (char *str, long long *add, Marker *marks, long int amount_marks)
 {
     char *copy = (char*) calloc(MAX_SYMB, sizeof(char));
     for (int j = 0; j < MAX_SYMB; j++)
@@ -558,7 +561,7 @@ assembl_er read_val_for_push (FILE *out, FILE *list_file, char **str, long int *
 
 assembl_er read_mark (FILE *out, FILE *list_file, char *command, char *reg, long int *address, char code, char mode, Marker *marks, long int amount_marks, int just_check)
 {
-    long int add  = 0;
+    long long add  = 0;
 
     assembl_er checking_mark = ASM_OK;
 
@@ -634,7 +637,7 @@ assembl_er translate_arg(FILE *out, FILE *list_file, char **str, char **command,
         else if (*code == COM_POP)
         {
             if (just_check == FINAL_WRITE)
-                writing_and_listing(out, list_file, *address, *code, NOTHING, value, *command, NULL, -1);
+                writing_and_listing(out, list_file, *address, *code, NOTHING, value, *command, "", -1);
             (*address) += TWO_ARGS;
             free(reg);
         }
