@@ -389,12 +389,14 @@ void listing (FILE *list_file, long int address, char code, char mode, int args,
     else if (args == 1)
     {
         long long long_mode = (long long)mode;
-        if (dir > 0) {
+        if (dir > 0) 
+        {
             long long long_dir = (long long)dir;
             
             fprintf(list_file, "%04x | %2d %d %10ld | %016llx %016llx %016llx | %5s %4ld\n",
                         (unsigned int)address, code, mode, dir, long_code, long_mode, long_dir, command, dir);
-        } else {
+        } else 
+        {
             fprintf(list_file, "%04x | %2d %d %10c | %016llx %016llx %16c | %5s %4s\n",
                         (unsigned int)address, code, mode, space, long_code, long_mode, space, command, reg);
         }
@@ -413,7 +415,6 @@ void writing_and_listing (FILE *out, FILE *list_file, long int address, char cod
     if (mode == NO_REG_JUMP)
     {
         fwrite(&add, sizeof(long long), 1, out);
-        printf("YAAAAAAAAAAAAAAAAAAZ %lld\n", add);
         listing(list_file, address, code, mode, 1, value, command, reg, add);
     }
     else if (mode == ADDRSS)
@@ -792,7 +793,6 @@ assembl_er assembling (FILE *out, FILE *list_file, char *input, const size_t n_l
     for (unsigned int i = 0; i < n_lines; i++)
     {
         int read_com = read_string(&input, command, BEGINNING);
-        printf("%s\n", command);
 
         if (read_com == 0)
         {

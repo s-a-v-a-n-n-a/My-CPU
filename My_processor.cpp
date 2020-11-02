@@ -10,7 +10,6 @@
 
 #define DEFINE_COMMANDS(name, number, args, coding, discoding) \
         case number:                                           \
-            printf("%s\n", #name);                             \
                                                                \
             coding;                                            \
                                                                \
@@ -93,12 +92,11 @@ void start_perfomance (char *program, size_t length)
 
     for (int i = 0; i < 4; i++)
     {
-        proc.registers[i] = 0;                                               //   /\  | || |      ||     /\    ||
-    }                                                                       //   //\\  \||/       ||    //\\   ||
-                                                                                //..\\  ||        ||   //..\\  ||
-    for (long long rip = 0; rip < (long long)(length/sizeof(char)) - 1; rip++) // ()//  //         \\ // () || ||
+        proc.registers[i] = 0;                                             
+    }                                                                       
+                                                                               
+    for (long long rip = 0; rip < (long long)(length/sizeof(char)) - 1; rip++) 
     {
-        printf("%04x\n", rip);
         char val = *program_copy;
 
         char mode = 0;
