@@ -371,30 +371,40 @@ void list_header (FILE *list_file)
 void listing (FILE *list_file, long int address, char code, char mode, int args, double value, char *command, char *reg, long int dir)
 {
     char space = ' ';
+    
+    
+    long long long_code = (long long)code;
 
     if (code == 0)
     {
         fprintf(list_file, "%04x | %2d %12c | %016llx %33c | %5s\n",
-                       (unsigned int)address, (unsigned)code, space, *((long long*)&code), space, command);
+                       (unsigned int)address, (unsigned)code, space, long_code, space, command);
     }
     else if (!args)
     {
+        
         fprintf(list_file, "%04x | %2d %12c | %016llx %33c | %5s\n",
-                       (unsigned int)address, (unsigned)code, space, *((long long*)&code), space, command);
+                       (unsigned int)address, (unsigned)code, space, long_code, space, command);
     }
     else if (args == 1)
     {
-        if (dir > 0)
-            fprintf(list_file, "%04x | %2d %d %10d | %016llx %016llx %16llx | %5s %4ld\n",
-                        (unsigned int)address, code, mode, dir, *((long long*)&code), *((long long*)&mode), *((long long*)&dir), command, dir);
-        else
+        long long long_mode = (long long)mode;
+        if (dir > 0) {
+            long long long_dir = *((long long*)&dir);
+            
+            fprintf(list_file, "%04x | %2d %d %10ld | %016llx %016llx %16llx | %5s %4ld\n",
+                        (unsigned int)address, code, mode, dir, long_code, long_mode, long_dir, command, dir);
+        } else {
             fprintf(list_file, "%04x | %2d %d %10c | %016llx %016llx %16c | %5s %4s\n",
-                        (unsigned int)address, code, mode, space, *((long long*)&code), *((long long*)&mode), space, command, reg);
+                        (unsigned int)address, code, mode, space, long_code, long_mode, space, command, reg);
+        }
     }
     else
     {
+        long long long_mode = (long long)mode;
+        long long long_value = *((long long*)&value);
         fprintf(list_file, "%04x | %2d %d %10lg | %016llx %016llx %016llx | %5s %4d %lg\n",
-                        (unsigned int)address, code, mode, value, *((long long*)&code), *((long long*)&mode), value, command, mode, value);
+                        (unsigned int)address, code, mode, value, long_code, long_mode, long_value, command, mode, value);
     }
 }
 
