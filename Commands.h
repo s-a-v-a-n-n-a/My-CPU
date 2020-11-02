@@ -50,7 +50,7 @@
 #define JUMP_STATEMENT(operator);                       \
 printf("address -> %llx\n", program_copy - program);\
     READ_VALUE(jump);                                   \
-    printf("jump %lg\n", jump);                         \
+    printf("jump %llx\n", jump);                         \
                                                         \
     if (proc.stack->stack->length > 1)                  \
     {                                                   \

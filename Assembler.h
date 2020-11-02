@@ -155,7 +155,7 @@ Makes out a listing for each command
 @param[in]   *reg                   The name of the register
 @param[in]    add
 */
-void       writing_and_listing (FILE *out, FILE *list_file, long int address, char code, char mode, double value, char *command, char *reg, long int add);
+void       writing_and_listing (FILE *out, FILE *list_file, long int address, char code, char mode, double value, char *command, char *reg, long long add);
 
 /*!
 Reads the text part of code
@@ -390,9 +390,9 @@ void listing (FILE *list_file, long int address, char code, char mode, int args,
     {
         long long long_mode = (long long)mode;
         if (dir > 0) {
-            long long long_dir = *((long long*)&dir);
+            long long long_dir = (long long)dir;
             
-            fprintf(list_file, "%04x | %2d %d %10ld | %016llx %016llx %16llx | %5s %4ld\n",
+            fprintf(list_file, "%04x | %2d %d %10ld | %016llx %016llx %016llx | %5s %4ld\n",
                         (unsigned int)address, code, mode, dir, long_code, long_mode, long_dir, command, dir);
         } else {
             fprintf(list_file, "%04x | %2d %d %10c | %016llx %016llx %16c | %5s %4s\n",
@@ -408,7 +408,7 @@ void listing (FILE *list_file, long int address, char code, char mode, int args,
     }
 }
 
-void writing_and_listing (FILE *out, FILE *list_file, long int address, char code, char mode, double value, char *command, char *reg, long int add)
+void writing_and_listing (FILE *out, FILE *list_file, long int address, char code, char mode, double value, char *command, char *reg, long long add)
 {
     if (mode == NO_REG_JUMP)
     {
