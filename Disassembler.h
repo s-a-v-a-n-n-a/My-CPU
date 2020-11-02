@@ -17,23 +17,23 @@ const int DISASSEMBLING = 2;
                                                                \
             break;
 
-char *read_codes       (size_t *length);
+char     *read_codes     (size_t *length);
 
-void disassembling     (FILE *dis, char *program, size_t length);
+void      disassembling  (FILE *dis, char *program, size_t length);
 
-long long count_labels (FILE *dis, char *program, size_t length, long long **labels);
+long long count_labels   (FILE *dis, char *program, size_t length, long long **labels);
 
-void write_labels      (FILE *dis, char *program, size_t length, long long *labels);
+void      write_labels   (FILE *dis, char *program, size_t length, long long *labels);
 
-void disassembling (FILE *dis, char *program, size_t length, long long *labels, long long n_labels);
+void      disassembling  (FILE *dis, char *program, size_t length, long long *labels, long long n_labels);
 
-void start_dis         ();
+void      start_dis      ();
 
 char *read_codes   (size_t *length)
 {
     *length        = 0;
     size_t n_lines = 0;
-    char *program  = (char*) reading_file("second.xex", length, &n_lines);
+    char *program  = (char*) reading_file("second.xex", length, &n_lines, 0);
     if (!program)
     {
         printf("No memory access denied\n");

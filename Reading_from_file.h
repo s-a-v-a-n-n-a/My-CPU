@@ -37,7 +37,7 @@ size_t get_size_of_file(FILE* file)
     return length;
 }
 
-char *get_the_text(FILE* file, size_t* length)
+char *get_the_text(FILE* file, size_t* length, int mode_read)
 {
     assert(file != NULL && *length != 0);
 
@@ -46,13 +46,13 @@ char *get_the_text(FILE* file, size_t* length)
 
     assert((size_t)obj == *length - 1);
 
-    if (buffer[obj] != '\n')
+    if (buffer[obj] != '\n' && mode_read)
     {
-        buffer[*length - 1] = '\n';
+        buffer[*length - 2] = '\n';
         (*length)++;
     }
 
-    buffer[*length] = '\0';
+    buffer[*length - 1] = '\0';
 
     return buffer;
 }
@@ -84,16 +84,16 @@ size_t get_num_lines(char* buf, size_t length)
     return n_lines;
 }
 
-char *reading_file (const char *file_name, size_t *length, size_t *num_lines)
+char *reading_file (const char *file_name, size_t *length, size_t *num_lines, int mode_read)
 {
     FILE* input = fopen(file_name, "rb");
     if (!input)
         return NULL;
 
     *length       = get_size_of_file(input);
-    char *first   = get_the_text    (input, length);
+    char *first   = get_the_text    (input, length, mode_read);
 
-    *num_lines = get_num_lines (first, *length);
+    *num_lines    = get_num_lines (first, *length);
 
 
     //fclose(input);

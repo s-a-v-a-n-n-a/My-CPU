@@ -798,7 +798,7 @@ assembl_er processing (const char *file_name)
     size_t length  = 0;
     size_t n_lines = 0;
 
-    char *first = reading_file(file_name, &length, &n_lines);
+    char *first = reading_file(file_name, &length, &n_lines, 1);
     if (!first)
         return ASM_FILE_ERROR;
 

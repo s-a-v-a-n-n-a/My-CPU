@@ -71,7 +71,7 @@ char *read_program (size_t *length)
 {
     *length        = 0;
     size_t n_lines = 0;
-    char *program  = (char*) reading_file(EXECUTABLE_FILE, length, &n_lines);
+    char *program  = (char*) reading_file(EXECUTABLE_FILE, length, &n_lines, 0);
     if (!program)
     {
         printf("No memory access denied\n");

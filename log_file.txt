@@ -3,29 +3,35 @@ THE NEWS FROM DESTRUCTOR
 EVERYTHING IS OKAY
 Current capacity: 4
 Current size    : 0
-Current address of the stack : 00820580
-Current address of the buffer: 00824A00
+Current address of the stack : 006D0580
+Current address of the buffer: 006D4A20
 [   0] : 1.#QNAN
 [   1] : 1.#QNAN
 [   2] : NAN (POISON)
 [   3] : NAN (POISON)
 Current hash of the buffer: 7798904
-Current hash of the stack : 3458
+Current hash of the stack : 5263
 
 CURRENT STATE OF STACK
 THE NEWS FROM DESTRUCTOR
 EVERYTHING IS OKAY
-Current capacity: 7
+Current capacity: 13
 Current size    : 5
-Current address of the stack : 008204D8
-Current address of the buffer: 00824A70
+Current address of the stack : 006D04D8
+Current address of the buffer: 006D24C8
 [   0] : 1.#QNAN
 [   1] : 0
 [   2] : 1
 [   3] : 0
-[   4] : 0
-[   5] : 0
+[   4] : 1
+[   5] : 1
 [   6] : 1.#QNAN
-Current hash of the buffer: 398327975
-Current hash of the stack : -2506
+[   7] : NAN (POISON)
+[   8] : NAN (POISON)
+[   9] : NAN (POISON)
+[  10] : NAN (POISON)
+[  11] : NAN (POISON)
+[  12] : NAN (POISON)
+Current hash of the buffer: 427032837
+Current hash of the stack : 3263
 
