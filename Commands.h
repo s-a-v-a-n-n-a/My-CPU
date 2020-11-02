@@ -126,14 +126,14 @@ DEFINE_COMMANDS ( PUSH, 1, 2,
     {
         READ_VALUE(val_last);
 
-        if (i == 2)
+        if (i == DISASSEMBLING)
             fprintf(dis, "[%lg]\n", val_last);
     }
     else
     {
         READ_VALUE(val_last);
 
-        if (i == 2)
+        if (i == DISASSEMBLING)
             fprintf(dis, "%lg\n", val_last);
     }
 })
@@ -236,11 +236,11 @@ DEFINE_COMMANDS ( POP, 8, 1,
 
     PRINT_DISASM("POP ");
 
-    if ((int)mode && (int)mode < 5 && i == 2)
+    if ((int)mode && (int)mode < NO_REG_JUMP && i == DISASSEMBLING)
     {
         PRINT_REG
     }
-    else if ((int)mode == 6 && i == 2)
+    else if ((int)mode == ADDRSS && i == DISASSEMBLING)
     {
         READ_VALUE(val_last);
 

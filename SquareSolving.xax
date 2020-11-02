@@ -94,7 +94,6 @@ PUSH RCX
 PUSH -1
 MUL
 DIV
-OUT
 
 REV
 

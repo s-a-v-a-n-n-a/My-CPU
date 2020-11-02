@@ -665,7 +665,7 @@ assembl_er find_marks(FILE *out, FILE *list_file, char *input, const size_t n_li
     if (!command)
         return ASM_MEMORY_ERROR;
 
-    for (unsigned int i = 0; i < n_lines; i++)
+    for (unsigned int i = 0; i < n_lines - 1; i++)
     {
         int read_com = read_string(&input, command, 0);
 
@@ -724,7 +724,7 @@ assembl_er parse_marks(FILE *out, FILE *list_file, char *input, const size_t n_l
 
     int just_check = CHECK_MARKS;
 
-    for (unsigned int i = 0; i < n_lines; i++)
+    for (unsigned int i = 0; i < n_lines - 1; i++)
     {
         int read_com = read_string(&input, command, BEGINNING);
 
@@ -776,7 +776,7 @@ assembl_er assembling (FILE *out, FILE *list_file, char *input, const size_t n_l
     if (!command)
         return ASM_MEMORY_ERROR;
 
-    for (unsigned int i = 0; i < n_lines; i++)
+    for (unsigned int i = 0; i < n_lines - 1; i++)
     {
         int read_com = read_string(&input, command, BEGINNING);
         printf("%s\n", command);
