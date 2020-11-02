@@ -25,7 +25,9 @@ long long count_labels (FILE *dis, char *program, size_t length, long long **lab
 
 void write_labels      (FILE *dis, char *program, size_t length, long long *labels);
 
-void start_dis         (FILE *dis, char *program, size_t length);
+void disassembling (FILE *dis, char *program, size_t length, long long *labels, long long n_labels);
+
+void start_dis         ();
 
 char *read_codes   (size_t *length)
 {
@@ -50,7 +52,7 @@ long long count_labels (FILE *dis, char *program, size_t length, long long **lab
 
     int i = FINDING;
 
-    for (int rip = 0; rip < length/sizeof(char) - 2; rip++)
+    for (int rip = 0; rip < (int)length/sizeof(char) - 2; rip++)
     {
         char val = *program_copy;
 
@@ -73,7 +75,7 @@ long long count_labels (FILE *dis, char *program, size_t length, long long **lab
         }
     }
 
-    *labels_null = (long long*) calloc(n_labels + 1, sizeof(long long));
+    *labels_null = (long long*) calloc((size_t)n_labels + 1, sizeof(long long));
     for (long long j = 0; j <= n_labels; j++)
         (*labels_null)[j] = -1;
 
@@ -116,7 +118,7 @@ void disassembling (FILE *dis, char *program, size_t length, long long *labels, 
 {
     char *program_copy = program;
 
-    int i = DISASSEMBLING;
+    unsigned int i = DISASSEMBLING;
 
     for (int rip = 0; rip < length/sizeof(char) - 2; rip++)
     {
@@ -154,9 +156,6 @@ void disassembling (FILE *dis, char *program, size_t length, long long *labels, 
 
 void start_dis()
 {
-    int        com   = 0;
-    assembl_er error = ASM_OK;
-
     size_t length = 0;
     char  *codes  = read_codes(&length);
 

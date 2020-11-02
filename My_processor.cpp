@@ -10,6 +10,7 @@
 
 #define DEFINE_COMMANDS(name, number, args, coding, discoding) \
         case number:                                           \
+            printf("%s, rip is %04x\n", #name, rip);     \
                                                                \
             coding;                                            \
                                                                \
@@ -26,7 +27,7 @@ struct Processor_on_stack{
 };
 
 const char *EXECUTABLE_FILE = "second.xex";
-const char *NAME            = "ramfile.xax";
+const char *NAME            = "SquareSolving.xax";
 
 char *read_program     (size_t *length);
 
@@ -45,7 +46,9 @@ int main (int argc, const char **argv)
     }
     else
     {
+        printf("Here\n");
         error = processing(NAME);
+        printf("Here\n");
     }
 
     start_dis();
@@ -85,7 +88,7 @@ void start_perfomance (char *program, size_t length)
 {
     char *program_copy = program;
 
-    Processor proc = {};
+    Processor proc = {0};
     proc.stack = stack_new(2);
     proc.funcs = stack_new(2);
     proc.ram   = (double*) calloc(1000, sizeof(double));
@@ -95,9 +98,11 @@ void start_perfomance (char *program, size_t length)
         proc.registers[i] = 0;
     }
 
-    for (int rip = 0; rip < length/sizeof(char) - 1; rip++)
+    for (long long rip = 0; rip < (long long)length/sizeof(char) - 1; rip++)
     {
         char val = *program_copy;
+
+        printf("%d\n", rip);
 
         char mode = 0;
 

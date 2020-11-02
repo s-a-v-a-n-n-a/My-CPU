@@ -54,7 +54,7 @@ typedef double stack_elem;
     {                                                                     \
         ASSERTION(check);                                                 \
         stack_dump((*that_stack), check, mode);                           \
-    }                                                                     \
+    }
 
 
 #define VERIFYING_DESTRUCT(that_stack);                                   \
@@ -212,7 +212,7 @@ Returns  STACK_OK                     If everything is ok\n
          STACK_TRANSACTION_ERROR      If the stack was spoiled and there were troubles with memory to fix it\n
          STACK_TRANSACTION_OK         If the stack was spoiled and it was fixed\n
 */
-stack_code stack_resize                 (Stack **that_stack, Structure *stack, const double amount);
+stack_code        stack_resize          (Stack **that_stack, Structure *stack, const double amount);
 
 /*!
 Adds value to the end of the stack
@@ -257,7 +257,7 @@ Returns  STACK_OK                     If everything is ok\n
          STACK_TRANSACTION_ERROR      If the stack was spoiled and there were troubles with memory to fix it\n
          STACK_TRANSACTION_OK         If the stack was spoiled and it was fixed\n
 */
-stack_code stack_back                   (Stack **that_stack, stack_elem *value);
+stack_code        stack_back            (Stack **that_stack, stack_elem *value);
 
 
 void assertion (stack_code code)

@@ -1,24 +1,38 @@
-HLT
-HLT
 IN
 IN
 IN
+
 POP RCX
 POP RBX
 POP RAX
+
 PUSH 0
 PUSH RAX
-JE #9
-CALL #10
+
+JE #a
+
+CALL #disc
+
 POP RDX
 PUSH 0
 PUSH RDX
-JB #11
-JE #12
-JA #13
+;PUSH RDX
+;OUT
+
+JB #dless
+
+JE #deq
+
+JA #dmore
+
+dless:
+
 PUSH 0
 OUT
-JMP #14
+JMP #exit
+
+deq:
+
 PUSH RAX
 PUSH 2
 MUL
@@ -27,19 +41,26 @@ PUSH -1
 MUL
 DIV
 OUT
-JMP #15
+JMP #exit
+
+dmore:
+;first root
 PUSH RAX
 PUSH 2
 MUL
 PUSH RDX
 SQRT
 PUSH RBX
+;OUT
 PUSH -1
 MUL
+;OUT
 SUB
+;OUT
 DIV
 OUT
-POP PUSH RAX
+POP
+PUSH RAX
 PUSH 2
 PUSH RDX
 SQRT
@@ -47,31 +68,60 @@ PUSH -1
 MUL
 PUSH RBX
 PUSH -1
+;OUT
 MUL
 SUB
 DIV
 OUT
-POP JMP #16
-CALL #17
+POP
+JMP #exit
+
+a:
+
+CALL #aa
 OUT
-JMP #18
+JMP #exit
+
+
+
+aa:
+
 PUSH 0
 PUSH RBX
-JE #19
+
+JE #b
+
 PUSH RCX
 PUSH -1
 MUL
 DIV
+
 REV
-CALL #20
+
+
+b:
+
+CALL #bb
 REV
+
+
+bb:
+
 PUSH 0
 PUSH RCX
-JE #21
+
+JE #c
+
 PUSH 0
 REV
+
+c:
+
 PUSH -3
 REV
+
+disc:
+
 PUSH RBX
 PUSH RBX
 MUL
@@ -84,4 +134,8 @@ MUL
 PUSH RBX
 SUB
 REV
-IN
+
+exit:
+
+HLT
+

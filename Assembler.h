@@ -55,6 +55,7 @@ const int REG_RCX       = 3;
 const int REG_RDX       = 4;
 const int NO_REG_JUMP   = 5;
 const int ADDRSS        = 6;
+const int NOTHING       = 7;
 
 #define DEFINE_COMMANDS(name, number, arg, coding, discoding)                                                    \
     if (!strcmp(command, #name))                                                                                 \
@@ -75,10 +76,12 @@ const int ADDRSS        = 6;
         }                                                                                                        \
         else                                                                                                     \
         {                                                                                                        \
+            printf("I am here\n");                                                                               \
             if (just_check == FINAL_WRITE)                                                                       \
             {                                                                                                    \
                 listing(list_file, address, code, mode, 0, 0, command, NULL, -1);                                \
             }                                                                                                    \
+            printf("Then here\n");       \
             address += ONE_ARG;                                                                                  \
         }                                                                                                        \
                                                                                                                  \
@@ -371,26 +374,29 @@ void listing (FILE *list_file, long int address, char code, char mode, int args,
 
     if (code == 0)
     {
-        fprintf(list_file, "%04x | %2d %12c | %016llx %33c | %5s\n",
-                       (unsigned int)address, code, space, (double)code, space, command);
+        fprintf(list_file, "%04x | %2d %12c | %016f %33c | %5s\n",
+                       (unsigned int)address, (unsigned)code, space, (double)code, space, command);
     }
     else if (!args)
     {
-        fprintf(list_file, "%04x | %2d %12c | %016llx %33c | %5s\n",
-                       (unsigned int)address, code, space, (double)code, space, command);
+        printf("AAAAAAAAAAAAAAAA %s\n", command);
+        fprintf(list_file, "%04x | %2d %12c | %016f %33c | %s\n",
+                       (unsigned int)address, (unsigned)code, space, (double)code, space, command);
+        printf("aa...\n");
+        printf("aa...\n");
     }
     else if (args == 1)
     {
         if (dir > 0)
-            fprintf(list_file, "%04x | %2d %ld %10c | %016llx %016llx %16c | %5s %4d\n",
+            fprintf(list_file, "%04x | %2d %d %10c | %016f %016f %16c | %5s %4ld\n",
                         (unsigned int)address, code, mode, space, (double)code, (double)mode, space, command, dir);
         else
-            fprintf(list_file, "%04x | %2d %ld %10c | %016llx %016llx %16c | %5s %4s\n",
+            fprintf(list_file, "%04x | %2d %d %10c | %016f %016f %16c | %5s %4s\n",
                         (unsigned int)address, code, mode, space, (double)code, (double)mode, space, command, reg);
     }
     else
     {
-        fprintf(list_file, "%04x | %2d %d %10lg | %016llx %016llx %016llx | %5s %04d %lg\n",
+        fprintf(list_file, "%04x | %2d %d %10lg | %016f %016f %016f | %5s %04d %lg\n",
                         (unsigned int)address, code, mode, value, (double)code, (double)mode, value, command, mode, value);
     }
 }
@@ -408,6 +414,13 @@ void writing_and_listing (FILE *out, FILE *list_file, long int address, char cod
         fwrite(&value, sizeof(double), 1, out);
 
         listing(list_file, address, code, mode, 2, value, command, reg, -1);
+    }
+    else if (mode == NOTHING)
+    {
+        mode = 0;
+
+        fwrite(&mode, sizeof(char), 1, out);
+        listing(list_file, address, code, mode, 1, value, command, reg, -1);
     }
     else if (mode > ONLY_VAL)
     {
@@ -433,13 +446,13 @@ assembl_er read_value  (char **str, double *value, int code_call)
     if (code_call)
     {
         while (**str == ' ')
-            *(*str)++;
+            (*str)++;
         sscanf(*str, "%c", &symbol);
         if (symbol != '[')
         {
             return ASM_WRONG_NUM;
         }
-        *(*str)++;
+        (*str)++;
     }
 
     sscanf(*str, "%lg%n", value, &trailing_index);
@@ -448,7 +461,7 @@ assembl_er read_value  (char **str, double *value, int code_call)
     *str += trailing_index;
 
     while (**str == ' ')
-            *(*str)++;
+            (*str)++;
 
     symbol = **str;
     if (symbol == ']' && code_call && trailing_index)
@@ -574,8 +587,6 @@ assembl_er read_mark (FILE *out, FILE *list_file, char *command, char *reg, long
 
 assembl_er check_trash (char **str)
 {
-    int counter = 0;
-
     if (!isspace(**str) && (**str != ';') && (**str != '\r') && (**str != '\n') && (**str != '\0'))
     {
         return ASM_WRONG_COMMAND;
@@ -599,7 +610,6 @@ assembl_er translate_arg(FILE *out, FILE *list_file, char **str, char **command,
         if (!reg)
             result = ASM_MEMORY_ERROR;
 
-        assembl_er error = ASM_OK;
         char mode        = ONLY_VAL;
 
         int  read_reg = read_string(str, reg, MIDDLE);
@@ -625,6 +635,16 @@ assembl_er translate_arg(FILE *out, FILE *list_file, char **str, char **command,
         }
         else if (read_reg == ADDRESS)
             result = read_val_for_push(out, list_file, str, address, PUSH_ADDRESS, just_check);
+        else if (*code == COM_POP)
+        {
+            printf("Le\n");
+            writing_and_listing(out, list_file, *address, *code, NOTHING, value, *command, NULL, -1);
+            (*address) += TWO_ARGS;
+            free(reg);
+            printf("Le\n");
+        }
+        else
+            result = ASM_WRONG_COMMAND;
      }
      else if (*code == COM_PUSH)
      {
@@ -643,7 +663,6 @@ assembl_er find_marks(FILE *out, FILE *list_file, char *input, const size_t n_li
     assembl_er error = ASM_OK;
 
     long int amount  = 0;
-    long int address = 0;
 
     int just_check = FIND_MARKS;
 
@@ -714,10 +733,9 @@ assembl_er parse_marks(FILE *out, FILE *list_file, char *input, const size_t n_l
     {
         int read_com = read_string(&input, command, BEGINNING);
 
-        int flag = 1;
-
         if (read_com == 0)
         {
+            int flag = 1;
             #include "Commands.h"
             long int flag_mark = 0;
             if (flag)
@@ -766,11 +784,11 @@ assembl_er assembling (FILE *out, FILE *list_file, char *input, const size_t n_l
     for (unsigned int i = 0; i < n_lines - 1; i++)
     {
         int read_com = read_string(&input, command, BEGINNING);
-
-        int flag = 0;
+        printf("%s\n", command);
 
         if (read_com == 0)
         {
+            int flag = 1;
             #include "Commands.h"
         }
     }
@@ -789,18 +807,20 @@ assembl_er processing (const char *file_name)
     if (!first)
         return ASM_FILE_ERROR;
 
-    size_t     length_second = 0;
-    size_t     len_code      = 0;
+    assembl_er err = ASM_OK;
 
-    FILE      *out = fopen("second.xex", "wb");
+    FILE  *out      = fopen("second.xex", "wb");
 
     FILE *list_file = fopen("listing.txt", "wb");
+    if (!list_file)
+        err = ASM_FILE_ERROR;
     list_header(list_file);
 
     Marker  *marks  = NULL;
     long int amount = 0;
 
-    assembl_er err = find_marks(out, list_file, first, n_lines, &marks);
+    if (err == ASM_OK)
+        err = find_marks(out, list_file, first, n_lines, &marks);
 
     if (err == ASM_NO_MARKS)
     {
@@ -808,8 +828,9 @@ assembl_er processing (const char *file_name)
     }
     else if (err == ASM_OK)
     {
+        printf("AHere\n");
         err = parse_marks(out, list_file, first, n_lines, marks, &amount);
-
+        printf("AHere\n");
         if (err == ASM_OK)
             err = assembling(out, list_file, first, n_lines, marks, &amount);
     }
@@ -820,6 +841,10 @@ assembl_er processing (const char *file_name)
         switch (err)
         {
             case ASM_OK:
+
+                break;
+
+            case ASM_NO_MARKS:
 
                 break;
 

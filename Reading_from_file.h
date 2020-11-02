@@ -41,15 +41,15 @@ char *get_the_text(FILE* file, size_t* length)
 {
     assert(file != NULL && *length != 0);
 
-    char* buffer = (char*) calloc(*length, sizeof(char));
-    long int obj = fread(buffer, sizeof(char), *length, file);
+    char* buffer = (char*) calloc(*length + 1, sizeof(char));
+    long int obj = fread(buffer, sizeof(char), *length + 1, file);
 
     assert((size_t)obj == *length - 1);
 
     if (buffer[obj] != '\n')
     {
-        (*length)++;
         buffer[*length - 2] = '\n';
+        (*length)++;
     }
 
     buffer[*length - 1] = '\0';
@@ -95,7 +95,8 @@ char *reading_file (const char *file_name, size_t *length, size_t *num_lines)
 
     *num_lines = get_num_lines (first, *length);
 
-    fclose(input);
+
+    //fclose(input);
 
     return first;
 }
