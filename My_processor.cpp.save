@@ -10,7 +10,6 @@
 
 #define DEFINE_COMMANDS(name, number, args, coding, discoding) \
         case number:                                           \
-            printf("%s, rip is %04x\n", #name, rip);     \
                                                                \
             coding;                                            \
                                                                \
@@ -46,9 +45,7 @@ int main (int argc, const char **argv)
     }
     else
     {
-        printf("Here\n");
         error = processing(NAME);
-        printf("Here\n");
     }
 
     start_dis();
@@ -74,7 +71,7 @@ char *read_program (size_t *length)
 {
     *length        = 0;
     size_t n_lines = 0;
-    char *program  = (char*) reading_file(EXECUTABLE_FILE, length, &n_lines);
+    char *program  = (char*) reading_file(EXECUTABLE_FILE, length, &n_lines, 0);
     if (!program)
     {
         printf("No memory access denied\n");
@@ -95,14 +92,12 @@ void start_perfomance (char *program, size_t length)
 
     for (int i = 0; i < 4; i++)
     {
-        proc.registers[i] = 0;
-    }
-
-    for (long long rip = 0; rip < length/sizeof(char) - 1; rip++)
+        proc.registers[i] = 0;                                               //   /\  | || |      ||     /\    ||
+    }                                                                            //\\  \||/       ||    //\\   ||
+                                                                                //..\\  ||        ||   //..\\  ||
+    for (long long rip = 0; rip < (long long)(length/sizeof(char)) - 1; rip++) // ()//  //         \\ // () || \\
     {
         char val = *program_copy;
-
-        printf("%d\n", rip);
 
         char mode = 0;
 

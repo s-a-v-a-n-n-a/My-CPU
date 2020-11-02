@@ -92,10 +92,10 @@ void start_perfomance (char *program, size_t length)
 
     for (int i = 0; i < 4; i++)
     {
-        proc.registers[i] = 0;
-    }
-
-    for (long long rip = 0; rip < (long long)(length/sizeof(char)) - 1 ; rip++)
+        proc.registers[i] = 0;                                               //   /\  | || |      ||     /\    ||
+    }                                                                       //   //\\  \||/       ||    //\\   ||
+                                                                                //..\\  ||        ||   //..\\  ||
+    for (long long rip = 0; rip < (long long)(length/sizeof(char)) - 1; rip++) // ()//  //         \\ // () || ||
     {
         char val = *program_copy;
 

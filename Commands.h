@@ -22,18 +22,22 @@
     if (i == DISASSEMBLING)                    \
         fprintf(dis, text, (int)n_labels - 1);
 
-#define PRINT_REG              \
-    if ((int)mode == 1)        \
-        fprintf(dis, "RAX\n"); \
-    else if ((int)mode == 2)   \
-        fprintf(dis, "RBX\n"); \
-    else if ((int)mode == 3)   \
-        fprintf(dis, "RCX\n"); \
-    else if ((int)mode == 4)   \
-        fprintf(dis, "RDX\n");
+#define PRINT_REG                  \
+    if (i == DISASSEMBLING)        \
+    {                              \
+        if ((int)mode == 1)        \
+            fprintf(dis, "RAX\n"); \
+        else if ((int)mode == 2)   \
+            fprintf(dis, "RBX\n"); \
+        else if ((int)mode == 3)   \
+            fprintf(dis, "RCX\n"); \
+        else if ((int)mode == 4)   \
+            fprintf(dis, "RDX\n"); \
+    }
 
 #define COUNT_JUMPS                                     \
-    n_labels++;                                         \
+    if (i != DISASSEMBLING)                             \
+        n_labels++;                                     \
                                                         \
     if (i == WRITING)                                   \
     {                                                   \
@@ -118,7 +122,7 @@ DEFINE_COMMANDS ( PUSH, 1, 2,
 
     READ_MODE
 
-    if ((int)mode > 0 && (int)mode < 5 && i == 2)
+    if ((int)mode > 0 && (int)mode < NO_REG_JUMP)
     {
         PRINT_REG
     }
@@ -236,7 +240,7 @@ DEFINE_COMMANDS ( POP, 8, 1,
 
     PRINT_DISASM("POP ");
 
-    if ((int)mode && (int)mode < NO_REG_JUMP && i == DISASSEMBLING)
+    if ((int)mode && (int)mode < NO_REG_JUMP)
     {
         PRINT_REG
     }
