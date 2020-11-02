@@ -76,12 +76,10 @@ const int NOTHING       = 7;
         }                                                                                                        \
         else                                                                                                     \
         {                                                                                                        \
-            printf("I am here\n");                                                                               \
             if (just_check == FINAL_WRITE)                                                                       \
             {                                                                                                    \
                 listing(list_file, address, code, mode, 0, 0, command, NULL, -1);                                \
             }                                                                                                    \
-            printf("Then here\n");       \
             address += ONE_ARG;                                                                                  \
         }                                                                                                        \
                                                                                                                  \
@@ -379,11 +377,8 @@ void listing (FILE *list_file, long int address, char code, char mode, int args,
     }
     else if (!args)
     {
-        printf("AAAAAAAAAAAAAAAA %s\n", command);
-        fprintf(list_file, "%04x | %2d %12c | %016f %33c | %s\n",
+        fprintf(list_file, "%04x | %2d %12c | %016f %33c | %5s\n",
                        (unsigned int)address, (unsigned)code, space, (double)code, space, command);
-        printf("aa...\n");
-        printf("aa...\n");
     }
     else if (args == 1)
     {
@@ -457,7 +452,6 @@ assembl_er read_value  (char **str, double *value, int code_call)
 
     sscanf(*str, "%lg%n", value, &trailing_index);
 
-    int count = 0;
     *str += trailing_index;
 
     while (**str == ' ')
@@ -553,8 +547,10 @@ assembl_er read_val_for_push (FILE *out, FILE *list_file, char **str, long int *
         return read_val;
     }
 
+    char *put = "PUSH";
+
     if (just_check == FINAL_WRITE)
-        writing_and_listing(out, list_file, *address, code, mode, value, "PUSH", NULL, 0);
+        writing_and_listing(out, list_file, *address, code, mode, value, put, NULL, 0);
     (*address) += THREE_ARGS;
 
     return read_val;
@@ -610,12 +606,12 @@ assembl_er translate_arg(FILE *out, FILE *list_file, char **str, char **command,
         if (!reg)
             result = ASM_MEMORY_ERROR;
 
-        char mode        = ONLY_VAL;
+        char mode = ONLY_VAL;
 
         int  read_reg = read_string(str, reg, MIDDLE);
         if (read_reg == STRING)
         {
-            mode =  check_reg(reg);
+            mode = (char)check_reg(reg);
             if (mode > MAX_REG)
             {
                 if (reg[0] == '#' && *code >= COM_JMP)
@@ -637,11 +633,10 @@ assembl_er translate_arg(FILE *out, FILE *list_file, char **str, char **command,
             result = read_val_for_push(out, list_file, str, address, PUSH_ADDRESS, just_check);
         else if (*code == COM_POP)
         {
-            printf("Le\n");
-            writing_and_listing(out, list_file, *address, *code, NOTHING, value, *command, NULL, -1);
+            if (just_check == FINAL_WRITE)
+                writing_and_listing(out, list_file, *address, *code, NOTHING, value, *command, NULL, -1);
             (*address) += TWO_ARGS;
             free(reg);
-            printf("Le\n");
         }
         else
             result = ASM_WRONG_COMMAND;
@@ -670,7 +665,7 @@ assembl_er find_marks(FILE *out, FILE *list_file, char *input, const size_t n_li
     if (!command)
         return ASM_MEMORY_ERROR;
 
-    for (long int i = 0; i < n_lines - 1; i++)
+    for (unsigned int i = 0; i < n_lines; i++)
     {
         int read_com = read_string(&input, command, 0);
 
@@ -729,7 +724,7 @@ assembl_er parse_marks(FILE *out, FILE *list_file, char *input, const size_t n_l
 
     int just_check = CHECK_MARKS;
 
-    for (unsigned int i = 0; i < n_lines - 1; i++)
+    for (unsigned int i = 0; i < n_lines; i++)
     {
         int read_com = read_string(&input, command, BEGINNING);
 
@@ -781,7 +776,7 @@ assembl_er assembling (FILE *out, FILE *list_file, char *input, const size_t n_l
     if (!command)
         return ASM_MEMORY_ERROR;
 
-    for (unsigned int i = 0; i < n_lines - 1; i++)
+    for (unsigned int i = 0; i < n_lines; i++)
     {
         int read_com = read_string(&input, command, BEGINNING);
         printf("%s\n", command);
@@ -828,9 +823,7 @@ assembl_er processing (const char *file_name)
     }
     else if (err == ASM_OK)
     {
-        printf("AHere\n");
         err = parse_marks(out, list_file, first, n_lines, marks, &amount);
-        printf("AHere\n");
         if (err == ASM_OK)
             err = assembling(out, list_file, first, n_lines, marks, &amount);
     }

@@ -10,7 +10,6 @@
 
 #define DEFINE_COMMANDS(name, number, args, coding, discoding) \
         case number:                                           \
-            printf("%s, rip is %04x\n", #name, rip);     \
                                                                \
             coding;                                            \
                                                                \
@@ -46,9 +45,7 @@ int main (int argc, const char **argv)
     }
     else
     {
-        printf("Here\n");
         error = processing(NAME);
-        printf("Here\n");
     }
 
     start_dis();
@@ -98,11 +95,9 @@ void start_perfomance (char *program, size_t length)
         proc.registers[i] = 0;
     }
 
-    for (long long rip = 0; rip < (long long)length/sizeof(char) - 1; rip++)
+    for (long long rip = 0; rip < (long long)(length/sizeof(char)) - 1 ; rip++)
     {
         char val = *program_copy;
-
-        printf("%d\n", rip);
 
         char mode = 0;
 

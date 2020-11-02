@@ -48,11 +48,11 @@ char *get_the_text(FILE* file, size_t* length)
 
     if (buffer[obj] != '\n')
     {
-        buffer[*length - 2] = '\n';
+        buffer[*length - 1] = '\n';
         (*length)++;
     }
 
-    buffer[*length - 1] = '\0';
+    buffer[*length] = '\0';
 
     return buffer;
 }

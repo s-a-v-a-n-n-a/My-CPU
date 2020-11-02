@@ -76,7 +76,7 @@ const int NOTHING       = 7;
         }                                                                                                        \
         else                                                                                                     \
         {                                                                                                        \
-            printf("I am here\n");                                                                               \
+            p
             if (just_check == FINAL_WRITE)                                                                       \
             {                                                                                                    \
                 listing(list_file, address, code, mode, 0, 0, command, NULL, -1);                                \
@@ -374,13 +374,13 @@ void listing (FILE *list_file, long int address, char code, char mode, int args,
 
     if (code == 0)
     {
-        fprintf(list_file, "%04x | %2d %12c | %016lx %33c | %5s\n",
+        fprintf(list_file, "%04x | %2d %12c | %016f %33c | %5s\n",
                        (unsigned int)address, (unsigned)code, space, (double)code, space, command);
     }
     else if (!args)
     {
         printf("AAAAAAAAAAAAAAAA %s\n", command);
-        fprintf(list_file, "%04x | %2d %12c | %016lx %33c | %s\n",
+        fprintf(list_file, "%04x | %2d %12c | %016f %33c | %s\n",
                        (unsigned int)address, (unsigned)code, space, (double)code, space, command);
         printf("aa...\n");
         printf("aa...\n");
@@ -388,16 +388,16 @@ void listing (FILE *list_file, long int address, char code, char mode, int args,
     else if (args == 1)
     {
         if (dir > 0)
-            fprintf(list_file, "%04x | %2d %d %10c | %016lx %016lx %16c | %5s %4d\n",
-                        (unsigned int)address, code, mode, space, (unsigned)code, (unsigned)mode, space, command, dir);
+            fprintf(list_file, "%04x | %2d %d %10c | %016f %016f %16c | %5s %4ld\n",
+                        (unsigned int)address, code, mode, space, (double)code, (double)mode, space, command, dir);
         else
-            fprintf(list_file, "%04x | %2d %ld %10c | %016lx %016lx %16c | %5s %4s\n",
+            fprintf(list_file, "%04x | %2d %d %10c | %016f %016f %16c | %5s %4s\n",
                         (unsigned int)address, code, mode, space, (double)code, (double)mode, space, command, reg);
     }
     else
     {
-        fprintf(list_file, "%04x | %2d %d %10lg | %016lx %016lx %016lx | %5s %04d %lg\n",
-                        (unsigned int)address, code, mode, value, (unsigned)code, (unsigned)mode, value, command, mode, value);
+        fprintf(list_file, "%04x | %2d %d %10lg | %016f %016f %016f | %5s %04d %lg\n",
+                        (unsigned int)address, code, mode, value, (double)code, (double)mode, value, command, mode, value);
     }
 }
 
@@ -457,7 +457,6 @@ assembl_er read_value  (char **str, double *value, int code_call)
 
     sscanf(*str, "%lg%n", value, &trailing_index);
 
-    int count = 0;
     *str += trailing_index;
 
     while (**str == ' ')
@@ -610,12 +609,12 @@ assembl_er translate_arg(FILE *out, FILE *list_file, char **str, char **command,
         if (!reg)
             result = ASM_MEMORY_ERROR;
 
-        char mode        = ONLY_VAL;
+        char mode = ONLY_VAL;
 
         int  read_reg = read_string(str, reg, MIDDLE);
         if (read_reg == STRING)
         {
-            mode =  check_reg(reg);
+            mode = check_reg(reg);
             if (mode > MAX_REG)
             {
                 if (reg[0] == '#' && *code >= COM_JMP)
@@ -637,11 +636,10 @@ assembl_er translate_arg(FILE *out, FILE *list_file, char **str, char **command,
             result = read_val_for_push(out, list_file, str, address, PUSH_ADDRESS, just_check);
         else if (*code == COM_POP)
         {
-            printf("Le\n");
-            writing_and_listing(out, list_file, *address, *code, NOTHING, value, *command, NULL, -1);
+            if (just_check == FINAL_WRITE)
+                writing_and_listing(out, list_file, *address, *code, NOTHING, value, *command, NULL, -1);
             (*address) += TWO_ARGS;
             free(reg);
-            printf("Le\n");
         }
         else
             result = ASM_WRONG_COMMAND;
@@ -670,7 +668,7 @@ assembl_er find_marks(FILE *out, FILE *list_file, char *input, const size_t n_li
     if (!command)
         return ASM_MEMORY_ERROR;
 
-    for (long int i = 0; i < n_lines - 1; i++)
+    for (long int i = 0; i < (long int)n_lines - 1; i++)
     {
         int read_com = read_string(&input, command, 0);
 
@@ -828,9 +826,7 @@ assembl_er processing (const char *file_name)
     }
     else if (err == ASM_OK)
     {
-        printf("AHere\n");
         err = parse_marks(out, list_file, first, n_lines, marks, &amount);
-        printf("AHere\n");
         if (err == ASM_OK)
             err = assembling(out, list_file, first, n_lines, marks, &amount);
     }

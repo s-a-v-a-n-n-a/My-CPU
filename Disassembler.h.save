@@ -52,7 +52,7 @@ long long count_labels (FILE *dis, char *program, size_t length, long long **lab
 
     int i = FINDING;
 
-    for (int rip = 0; rip < (int)(length/sizeof(char)) - 1; rip++)
+    for (int rip = 0; rip < (int)(length/sizeof(char) - 2); rip++)
     {
         char val = *program_copy;
 
@@ -90,7 +90,7 @@ void write_labels (FILE *dis, char *program, size_t length, long long *labels)
 
     int i = WRITING;
 
-    for (int rip = 0; rip < (int)(length/sizeof(char)) - 1; rip++)
+    for (int rip = 0; rip < (int)(length/sizeof(char) - 2); rip++)
     {
         char val = *program_copy;
 
@@ -120,9 +120,9 @@ void disassembling (FILE *dis, char *program, size_t length, long long *labels, 
 
     unsigned int i = DISASSEMBLING;
 
-    for (int rip = 0; rip < (int)(length/sizeof(char)) - 1; rip++)
+    for (int rip = 0; rip < (int)(length/sizeof(char) - 2); rip++)
     {
-        for (long int j = 0; j < n_labels; j++)
+        for (long long j = 0; j < n_labels; j++)
         {
             if (rip == labels[j])
             {

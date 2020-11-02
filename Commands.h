@@ -228,7 +228,6 @@ DEFINE_COMMANDS ( POP, 8, 1,
     else
     {
         stack_pop(&proc.stack, &val_last);
-        printf("%HERE\n");
     }
 },
 
@@ -425,7 +424,7 @@ DEFINE_COMMANDS ( CALL, 21, 1,
 {
     READ_VALUE(jump);
 
-    stack_push(&proc.funcs, rip);
+    stack_push(&proc.funcs, (stack_elem)rip);
 
     JUMP
 },
