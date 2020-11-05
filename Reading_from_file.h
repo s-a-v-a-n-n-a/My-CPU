@@ -15,11 +15,11 @@
 
 size_t get_size_of_file (FILE *file);
 
-char  *get_the_text     (FILE *file, size_t *length);
+char  *get_the_text     (FILE *file, size_t *length, int mode_read);
 
 size_t get_num_lines    (char *buf, size_t length);
 
-char  *reading_file     (const char *file_name, size_t *length, size_t *num_lines);
+char  *reading_file     (const char *file_name, size_t *length, size_t *num_lines, int mode_read);
 
 
 size_t get_size_of_file(FILE* file)

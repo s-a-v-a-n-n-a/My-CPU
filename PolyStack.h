@@ -29,6 +29,7 @@ typedef enum stack_code_errors { STACK_OK,
                                  STACK_TRANSACTION_ERROR,
                                  STACK_TRANSACTION_OK    } stack_code;
 
+typedef struct Current_command Command;
 
 const char *STACK_CONSTRUCT     = "CONSTRUCTOR";
 const char *STACK_DESTRUCT      = "DESTRUCTOR";
@@ -561,7 +562,7 @@ stack_code stack_verifier (Stack **that_stack)
         }
         else if (!(flag_hash_stack && flag_hash_copy && flag_hash_stack_buf) && flag_hash_copy_buf)
         {
-            long int i        = 1;
+            long int  i        = 1;
             long long new_len = 0;
 
             while(!isnan((float)(*that_stack)->stack_copy->buffer[i]))
@@ -570,9 +571,9 @@ stack_code stack_verifier (Stack **that_stack)
                 i++;
             }
 
-            (*that_stack)->stack_copy->length     = new_len + 1;
-            (*that_stack)->stack_copy->capacity   = new_len + 2;
-            (*that_stack)->stack_copy->hash_stack = hash_tmp_copy;
+            (*that_stack)->stack_copy->length     = (size_t)new_len + 1;
+            (*that_stack)->stack_copy->capacity   = (size_t)new_len + 2;
+            (*that_stack)->stack_copy->hash_stack = (size_t)hash_tmp_copy;
 
             reserve_copy(&(*that_stack)->stack_copy, &(*that_stack)->stack);
             return STACK_TRANSACTION_OK;
@@ -580,7 +581,7 @@ stack_code stack_verifier (Stack **that_stack)
         else if (!(flag_hash_stack && flag_hash_copy && flag_hash_copy_buf) && flag_hash_stack_buf)
         {
             long int  i       = 1;
-            long long new_len = 0;
+            size_t    new_len = 0;
 
             while(!isnan((float)(*that_stack)->stack->buffer[i]))
             {

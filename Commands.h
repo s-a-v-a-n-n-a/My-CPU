@@ -1,66 +1,36 @@
-#define READ_MODE         \
-    mode = *program_copy; \
-    program_copy++;       \
+#define READ_MODE                                               \
+    mode = *program_copy;                                       \
+    program_copy++;                                             \
     rip++;
 
-#define READ_VALUE(value);                           \
-    for (int k = 0; k < 8; k++)                      \
-    {                                                \
-        ((char*)(&value))[k] = *program_copy++;      \
-    }                                                \
-    rip += 8;
+#define READ_VALUE(value, type);                                \
+    for (int k = 0; k < type; k++)                              \
+    {                                                           \
+        ((char*)(&value))[k] = *program_copy++;                 \
+    }                                                           \
+    rip += type;
 
-#define JUMP                                         \
+
+#define JUMP                                                    \
     program_copy = program_copy - (rip - (long long)jump) - 1;  \
     rip = (long long)jump - 1;
 
-#define PRINT_DISASM(text); \
-    if (i == DISASSEMBLING) \
-        fprintf(dis, text);
 
-#define PRINT_DISASM_JUMP(text);               \
-    if (i == DISASSEMBLING)                    \
-        fprintf(dis, text, (int)n_labels - 1);
-
-#define PRINT_REG                  \
-    if (i == DISASSEMBLING)        \
-    {                              \
-        if ((int)mode == 1)        \
-            fprintf(dis, "RAX\n"); \
-        else if ((int)mode == 2)   \
-            fprintf(dis, "RBX\n"); \
-        else if ((int)mode == 3)   \
-            fprintf(dis, "RCX\n"); \
-        else if ((int)mode == 4)   \
-            fprintf(dis, "RDX\n"); \
-    }
-
-#define COUNT_JUMPS                                     \
-    if (i != DISASSEMBLING)                             \
-        n_labels++;                                     \
-                                                        \
-    if (i == WRITING)                                   \
-    {                                                   \
-        labels[n_labels - 1] = jump;                    \
-    }
-
-
-
-#define JUMP_STATEMENT(operator);                       \
-    READ_VALUE(jump);                                   \
-                                                        \
-    if (proc.stack->stack->length > 1)                  \
-    {                                                   \
-        stack_pop(&proc.stack, &val_last);              \
-        stack_pop(&proc.stack, &val_earl);              \
-                                                        \
-        if (val_last operator val_earl)                 \
-        {                                               \
-            JUMP                                        \
-        }                                               \
-                                                        \
-        stack_push(&proc.stack, val_earl);              \
-        stack_push(&proc.stack, val_last);              \
+#define JUMP_STATEMENT(operator);                               \
+    READ_VALUE(jump, sizeof(long long));                        \
+                                                                \
+    if (proc.stack->stack->length > 1)                          \
+    {                                                           \
+        stack_pop(&proc.stack, &val_last);                      \
+        stack_pop(&proc.stack, &val_earl);                      \
+                                                                \
+        if (val_last operator val_earl)                         \
+        {                                                       \
+            JUMP                                                \
+        }                                                       \
+                                                                \
+        stack_push(&proc.stack, val_earl);                      \
+        stack_push(&proc.stack, val_last);                      \
     }
 
 DEFINE_COMMANDS ( HLT, 0, 0,
@@ -85,7 +55,7 @@ DEFINE_COMMANDS ( PUSH, 1, 2,
     }
     else if ((int)mode == ADDRSS)
     {
-        READ_VALUE(val_last);
+        READ_VALUE(val_last, sizeof(long long));
 
         stack_pop(&proc.stack, &val_earl);
 
@@ -93,7 +63,7 @@ DEFINE_COMMANDS ( PUSH, 1, 2,
     }
     else
     {
-        READ_VALUE(val_last);
+        READ_VALUE(val_last, sizeof(double));
 
         stack_push(&proc.stack, val_last);
     }
@@ -108,16 +78,16 @@ DEFINE_COMMANDS ( PUSH, 1, 2,
     {
         PRINT_REG
     }
-    else if ((int)mode == 6 && i == 2)
+    else if ((int)mode == ADDRSS && i == DISASSEMBLING)
     {
-        READ_VALUE(val_last);
+        READ_VALUE(val_last, sizeof(long long));
 
-        if (i == DISASSEMBLING)
+        if (i == DISASSEMBLING)                      //Плохо, убрать
             fprintf(dis, "[%lg]\n", val_last);
     }
     else
     {
-        READ_VALUE(val_last);
+        READ_VALUE(val_last, sizeof(double));
 
         if (i == DISASSEMBLING)
             fprintf(dis, "%lg\n", val_last);
@@ -198,8 +168,6 @@ DEFINE_COMMANDS ( POP, 8, 1,
 {
     READ_MODE
 
-//    CONSTS
-
     if ((int)mode && (int)mode < NO_REG_JUMP)
     {
         stack_pop(&proc.stack, &val_last);
@@ -207,7 +175,7 @@ DEFINE_COMMANDS ( POP, 8, 1,
     }
     else if ((int)mode == ADDRSS)
     {
-        READ_VALUE(val_last);
+        READ_VALUE(val_last, sizeof(long long));
 
         stack_push(&proc.stack, proc.ram[(int)val_last]);
     }
@@ -226,13 +194,15 @@ DEFINE_COMMANDS ( POP, 8, 1,
     {
         PRINT_REG
     }
-    else if ((int)mode == ADDRSS && i == DISASSEMBLING)
+    else if ((int)mode == ADDRSS && i == DISASSEMBLING)       //Плохо
     {
-        READ_VALUE(val_last);
+        READ_VALUE(val_last, sizeof(long long));
 
-        if (i == 2)
+        if (i == DISASSEMBLING)
             fprintf(dis, "[%lg]\n", val_last);
     }
+    else if (i == DISASSEMBLING)
+         fprintf(dis, "\n");
 })
 
 DEFINE_COMMANDS ( SQRT, 9, 0,
@@ -290,13 +260,13 @@ DEFINE_COMMANDS ( DIV, 12, 0,
 
 DEFINE_COMMANDS ( JMP, 13, 1,
 {
-    READ_VALUE(jump);
+    READ_VALUE(jump, sizeof(long long));
 
     JUMP
 },
 
 {
-    READ_VALUE(jump);
+    READ_VALUE(jump, sizeof(long long));
 
     COUNT_JUMPS
 
@@ -309,7 +279,7 @@ DEFINE_COMMANDS ( JAE, 14, 1,
 },
 
 {
-    READ_VALUE(jump);
+    READ_VALUE(jump, sizeof(long long));
 
     COUNT_JUMPS
 
@@ -322,7 +292,7 @@ DEFINE_COMMANDS ( JA, 15, 1,
 },
 
 {
-    READ_VALUE(jump);
+    READ_VALUE(jump, sizeof(long long));
 
     COUNT_JUMPS
 
@@ -335,7 +305,7 @@ DEFINE_COMMANDS ( JB, 16, 1,
 },
 
 {
-    READ_VALUE(jump);
+    READ_VALUE(jump, sizeof(long long));
 
     COUNT_JUMPS
 
@@ -348,7 +318,7 @@ DEFINE_COMMANDS ( JBE, 17, 1,
 },
 
 {
-    READ_VALUE(jump);
+    READ_VALUE(jump, sizeof(long long));
 
     COUNT_JUMPS
 
@@ -361,7 +331,7 @@ DEFINE_COMMANDS ( JE, 18, 1,
 },
 
 {
-    READ_VALUE(jump);
+    READ_VALUE(jump, sizeof(long long));
 
     COUNT_JUMPS
 
@@ -374,7 +344,7 @@ DEFINE_COMMANDS ( JNE, 19, 1,
 },
 
 {
-    READ_VALUE(jump);
+    READ_VALUE(jump, sizeof(long long));
 
     COUNT_JUMPS
 
@@ -384,7 +354,7 @@ DEFINE_COMMANDS ( JNE, 19, 1,
 DEFINE_COMMANDS ( JM, 20, 1,
 {
     {
-        READ_VALUE(jump);
+        READ_VALUE(jump, sizeof(long long));
 
         struct tm *local;
         time_t timer = time(NULL);
@@ -399,7 +369,7 @@ DEFINE_COMMANDS ( JM, 20, 1,
 },
 
 {
-    READ_VALUE(jump);
+    READ_VALUE(jump, sizeof(long long));
 
     COUNT_JUMPS
 
@@ -408,7 +378,7 @@ DEFINE_COMMANDS ( JM, 20, 1,
 
 DEFINE_COMMANDS ( CALL, 21, 1,
 {
-    READ_VALUE(jump);
+    READ_VALUE(jump, sizeof(long long));
 
     stack_push(&proc.funcs, (stack_elem)rip);
 
@@ -416,7 +386,7 @@ DEFINE_COMMANDS ( CALL, 21, 1,
 },
 
 {
-    READ_VALUE(jump);
+    READ_VALUE(jump, sizeof(long long));
 
     COUNT_JUMPS
 

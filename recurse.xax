@@ -1,0 +1,31 @@
+IN
+POP RAX
+PUSH 1
+
+CALL #fact
+OUT
+HLT
+
+fact:
+PUSH RAX
+
+JE #next
+
+POP
+POP RBX
+PUSH RBX
+PUSH RBX
+PUSH 1
+ADD
+
+CALL #fact
+
+MUL
+REV
+
+
+next:
+
+POP
+
+REV

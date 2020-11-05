@@ -31,7 +31,9 @@ OUT
 JMP #exit
 
 deq:
-
+PUSH 1
+OUT
+POP
 PUSH RAX
 PUSH 2
 MUL
@@ -43,6 +45,9 @@ OUT
 JMP #exit
 
 dmore:
+PUSH 2
+OUT
+POP
 ;first root
 PUSH RAX
 PUSH 2
@@ -94,6 +99,9 @@ PUSH RCX
 PUSH -1
 MUL
 DIV
+PUSH 1
+OUT
+POP
 
 REV
 

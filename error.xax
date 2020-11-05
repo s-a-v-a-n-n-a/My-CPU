@@ -1,4 +1,4 @@
 PUSH 5
-PUSH 7
+PUSH and 7
 PUSH [9]
 ADD

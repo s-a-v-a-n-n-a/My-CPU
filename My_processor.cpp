@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include "Consts.h"
 #include "PolyStack.h"
-#include "Assembler.h"
+#include "Assembler.c"
 #include "Disassembler.h"
 
 #define COMPILATING
@@ -21,48 +22,24 @@ typedef struct Processor_on_stack Processor;
 struct Processor_on_stack{
     Stack  *stack;
     Stack  *funcs;
-    double  registers[4];
+    double  registers[REGISTER_NUM];
     double *ram;
 };
 
-const char *EXECUTABLE_FILE = "second.xex";
-const char *NAME            = "SquareSolving.xax";
-
 char *read_program     (size_t *length);
 
-void  start_perfomance (char *program, size_t length);
+void  start_processing (char *program, size_t length);
 
 int main (int argc, const char **argv)
 {
     int        com   = 0;
     assembl_er error = ASM_OK;
 
-    #ifdef COMPILATING
-    if (argc > 1)
-    {
-        error = processing(argv[1]);
-        com = 1;
-    }
-    else
-    {
-        error = processing(NAME);
-    }
+    size_t length = 0;
+    char  *prog   = read_program(&length);
+    if (prog)
+        start_processing(prog, length);
 
-    start_dis();
-    #endif
-
-    if (error == ASM_OK)
-    {
-        size_t length = 0;
-        char  *prog   = read_program(&length);
-        if (prog)
-            start_perfomance(prog, length);
-
-        if (com)
-            system("pause");
-    }
-    else
-        system("pause");
     system("pause");
     return 0;
 }
@@ -81,21 +58,21 @@ char *read_program (size_t *length)
     return program;
 }
 
-void start_perfomance (char *program, size_t length)
+void start_processing (char *program, size_t length)
 {
     char *program_copy = program;
 
-    Processor proc = {0};
-    proc.stack = stack_new(2);
-    proc.funcs = stack_new(2);
-    proc.ram   = (double*) calloc(1000, sizeof(double));
+    Processor proc = { NULL, NULL, { 0, 0, 0, 0 }, NULL };
+    proc.stack     = stack_new(START_NUMBER);
+    proc.funcs     = stack_new(START_NUMBER);
+    proc.ram       = (double*) calloc(RAM_MEMORY, sizeof(double));
 
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < REGISTER_NUM; i++)
     {
-        proc.registers[i] = 0;                                             
-    }                                                                       
-                                                                               
-    for (long long rip = 0; rip < (long long)(length/sizeof(char)) - 1; rip++) 
+        proc.registers[i] = 0;
+    }
+
+    for (long long rip = 0; rip < (long long)(length/sizeof(char)) - 1; rip++)
     {
         char val = *program_copy;
 
