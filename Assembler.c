@@ -661,7 +661,7 @@ void stat_destruct (Stat** asb)
     free(*asb);
 }
 
-assembl_er processing (const char *file_name)
+assembl_er assembling_control (const char *file_name)
 {
     Stat* current = NULL;
     assembl_er err = stat_construct(&current, file_name);
@@ -687,6 +687,45 @@ assembl_er processing (const char *file_name)
     stat_destruct(&current);
 
     return err;
+}
+
+void print_error (const assembl_er error)
+{
+    switch (error)
+    {
+        case ASM_OK:
+
+            break;
+
+        case ASM_NO_MARKS:
+
+            break;
+
+        case ASM_WRONG_NUM:
+
+            printf("Undefined value\n");
+            break;
+
+        case ASM_WRONG_COMMAND:
+
+            printf("Undefined command\n");
+            break;
+
+        case ASM_FILE_ERROR:
+
+            printf("No file found\n");
+            break;
+
+        case ASM_MEMORY_ERROR:
+
+            printf("Memory access denied\n");
+            break;
+
+        default:
+
+            break;
+
+    }
 }
 
 #undef DEFINE_COMMANDS

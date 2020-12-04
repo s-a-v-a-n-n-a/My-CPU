@@ -1,8 +1,18 @@
 #pragma once
 
+#define DEFINE_COMMANDS(name, number, arg, coding, discoding) \
+        COM_##name,
+
+typedef enum commands_for_processor
+{
+    #include "Commands.h"
+} commands;
+
+#undef DEFINE_COMMANDS
+
 const char *LISTING_FILE         = "listing.txt";
 const char *EXECUTABLE_FILE      = "binary.xex";
-const char *ASSEMBLING_FILE_NAME = "error.xax";
+const char *ASSEMBLING_FILE_NAME = "loop.xax";
 const char *DISASSEMBLING_FILE   = "disassemble.txt";
 
 const int START_NUMBER  = 2;

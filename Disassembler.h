@@ -4,8 +4,8 @@
 #include <assert.h>
 #include <ctype.h>
 
-#include "Reading_from_file.h"
-#include "Enums.h"
+#include "ReadingFromFile.h"
+//#include "Enums.h"
 #include "Consts.h"
 
 const int FINDING       = 0;

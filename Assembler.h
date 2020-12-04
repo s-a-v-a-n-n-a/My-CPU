@@ -14,8 +14,8 @@
 #include <assert.h>
 #include <ctype.h>
 
-#include "Enums.h"
-#include "Reading_from_file.h"
+//#include "Enums.h"
+#include "ReadingFromFile.h"
 #include "Consts.h"
 
 const int MAX_SYMB      = 256;
@@ -39,6 +39,16 @@ const int ONE_ARG       = 1;
 const int TWO_ARGS      = 2;
 const int TWO_ARGS_JUMP = 9;
 const int THREE_ARGS    = 10;
+
+typedef enum assembler_errors
+{
+    ASM_OK,
+    ASM_WRONG_NUM,
+    ASM_WRONG_COMMAND,
+    ASM_FILE_ERROR,
+    ASM_MEMORY_ERROR,
+    ASM_NO_MARKS
+} assembl_er;
 
 struct Assembling_label
 {
@@ -106,4 +116,6 @@ assembl_er assembling          (Stat *asb);
 assembl_er stat_construct      (Stat** asb, const char* file_name);
 void       stat_destruct       (Stat** asb);
 
-assembl_er processing          (const char *file_name);
+assembl_er assembling_control  (const char *file_name);
+
+void       print_error         (const assembl_er error);

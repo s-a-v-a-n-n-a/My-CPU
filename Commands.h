@@ -19,24 +19,24 @@
 #define JUMP_STATEMENT(operator);                               \
     READ_VALUE(jump, sizeof(long long));                        \
                                                                 \
-    if (proc.stack->stack->length > 1)                          \
+    if (proc->stack->stack->length > 1)                          \
     {                                                           \
-        stack_pop(&proc.stack, &val_last);                      \
-        stack_pop(&proc.stack, &val_earl);                      \
+        stack_pop(&proc->stack, &val_last);                      \
+        stack_pop(&proc->stack, &val_earl);                      \
                                                                 \
         if (val_last operator val_earl)                         \
         {                                                       \
             JUMP                                                \
         }                                                       \
                                                                 \
-        stack_push(&proc.stack, val_earl);                      \
-        stack_push(&proc.stack, val_last);                      \
+        stack_push(&proc->stack, val_earl);                      \
+        stack_push(&proc->stack, val_last);                      \
     }
 
 DEFINE_COMMANDS ( HLT, 0, 0,
 {
-    stack_destruct(&proc.funcs);
-    stack_destruct(&proc.stack);
+    stack_destruct(&proc->funcs);
+    stack_destruct(&proc->stack);
     free(program);
     return;
 },
@@ -51,21 +51,21 @@ DEFINE_COMMANDS ( PUSH, 1, 2,
 
     if ((int)mode && (int)mode < NO_REG_JUMP)
     {
-        stack_push(&proc.stack, proc.registers[(int)mode - 1]);
+        stack_push(&proc->stack, proc->registers[(int)mode - 1]);
     }
     else if ((int)mode == ADDRSS)
     {
         READ_VALUE(val_last, sizeof(long long));
 
-        stack_pop(&proc.stack, &val_earl);
+        stack_pop(&proc->stack, &val_earl);
 
-        proc.ram[(int)val_last] = val_earl;
+        proc->ram[(int)val_last] = val_earl;
     }
     else
     {
         READ_VALUE(val_last, sizeof(double));
 
-        stack_push(&proc.stack, val_last);
+        stack_push(&proc->stack, val_last);
     }
 },
 
@@ -96,10 +96,10 @@ DEFINE_COMMANDS ( PUSH, 1, 2,
 
 DEFINE_COMMANDS ( ADD, 2, 0,
 {
-    stack_pop(&proc.stack, &val_last);
-    stack_pop(&proc.stack, &val_earl);
+    stack_pop(&proc->stack, &val_last);
+    stack_pop(&proc->stack, &val_earl);
 
-    stack_push(&proc.stack, val_earl + val_last);
+    stack_push(&proc->stack, val_earl + val_last);
 },
 
 {
@@ -108,10 +108,10 @@ DEFINE_COMMANDS ( ADD, 2, 0,
 
 DEFINE_COMMANDS ( SUB, 3, 0,
 {
-    stack_pop(&proc.stack, &val_last);
-    stack_pop(&proc.stack, &val_earl);
+    stack_pop(&proc->stack, &val_last);
+    stack_pop(&proc->stack, &val_earl);
 
-    stack_push(&proc.stack, val_last - val_earl);
+    stack_push(&proc->stack, val_last - val_earl);
 },
 
 {
@@ -120,10 +120,10 @@ DEFINE_COMMANDS ( SUB, 3, 0,
 
 DEFINE_COMMANDS ( MUL, 4, 0,
 {
-    stack_pop(&proc.stack, &val_last);
-    stack_pop(&proc.stack, &val_earl);
+    stack_pop(&proc->stack, &val_last);
+    stack_pop(&proc->stack, &val_earl);
 
-    stack_push(&proc.stack, val_last * val_earl);
+    stack_push(&proc->stack, val_last * val_earl);
 },
 
 {
@@ -132,7 +132,7 @@ DEFINE_COMMANDS ( MUL, 4, 0,
 
 DEFINE_COMMANDS ( OUT, 5, 0,
 {
-    stack_back(&proc.stack, &val_last);
+    stack_back(&proc->stack, &val_last);
     printf("out %lg\n", val_last);
 
     system("pause");
@@ -144,9 +144,9 @@ DEFINE_COMMANDS ( OUT, 5, 0,
 
 DEFINE_COMMANDS ( SIN, 6, 0,
 {
-    stack_pop(&proc.stack, &val_last);
+    stack_pop(&proc->stack, &val_last);
 
-    stack_push(&proc.stack, sin(val_last));
+    stack_push(&proc->stack, sin(val_last));
 },
 
 {
@@ -155,9 +155,9 @@ DEFINE_COMMANDS ( SIN, 6, 0,
 
 DEFINE_COMMANDS ( COS, 7, 0,
 {
-    stack_pop(&proc.stack, &val_last);
+    stack_pop(&proc->stack, &val_last);
 
-    stack_push(&proc.stack, cos(val_last));
+    stack_push(&proc->stack, cos(val_last));
 },
 
 {
@@ -170,18 +170,18 @@ DEFINE_COMMANDS ( POP, 8, 1,
 
     if ((int)mode && (int)mode < NO_REG_JUMP)
     {
-        stack_pop(&proc.stack, &val_last);
-        proc.registers[(int)mode - 1] = val_last;
+        stack_pop(&proc->stack, &val_last);
+        proc->registers[(int)mode - 1] = val_last;
     }
     else if ((int)mode == ADDRSS)
     {
         READ_VALUE(val_last, sizeof(long long));
 
-        stack_push(&proc.stack, proc.ram[(int)val_last]);
+        stack_push(&proc->stack, proc->ram[(int)val_last]);
     }
     else
     {
-        stack_pop(&proc.stack, &val_last);
+        stack_pop(&proc->stack, &val_last);
     }
 },
 
@@ -207,9 +207,9 @@ DEFINE_COMMANDS ( POP, 8, 1,
 
 DEFINE_COMMANDS ( SQRT, 9, 0,
 {
-    stack_pop(&proc.stack, &val_last);
+    stack_pop(&proc->stack, &val_last);
 
-    stack_push(&proc.stack, sqrt(val_last));
+    stack_push(&proc->stack, sqrt(val_last));
 },
 
 {
@@ -228,7 +228,7 @@ DEFINE_COMMANDS ( IN, 10, 0,
             return;
         }
 
-        stack_push(&proc.stack, val_last);
+        stack_push(&proc->stack, val_last);
     }
 },
 
@@ -238,7 +238,7 @@ DEFINE_COMMANDS ( IN, 10, 0,
 
 DEFINE_COMMANDS ( DUMP, 11, 0,
 {
-    stack_dump(proc.stack, STACK_OK, "PROCESSOR");
+    stack_dump(proc->stack, STACK_OK, "PROCESSOR");
 },
 
 {
@@ -248,10 +248,10 @@ DEFINE_COMMANDS ( DUMP, 11, 0,
 
 DEFINE_COMMANDS ( DIV, 12, 0,
 {
-    stack_pop(&proc.stack, &val_last);
-    stack_pop(&proc.stack, &val_earl);
+    stack_pop(&proc->stack, &val_last);
+    stack_pop(&proc->stack, &val_earl);
 
-    stack_push(&proc.stack, val_last / val_earl);
+    stack_push(&proc->stack, val_last / val_earl);
 },
 
 {
@@ -380,7 +380,7 @@ DEFINE_COMMANDS ( CALL, 21, 1,
 {
     READ_VALUE(jump, sizeof(long long));
 
-    stack_push(&proc.funcs, (stack_elem)rip);
+    stack_push(&proc->funcs, (stack_elem)rip);
 
     JUMP
 },
@@ -396,7 +396,7 @@ DEFINE_COMMANDS ( CALL, 21, 1,
 DEFINE_COMMANDS ( REV, 22, 0,
 {
     double jmp = 0;
-    stack_pop(&proc.funcs, &jmp);
+    stack_pop(&proc->funcs, &jmp);
 
     program_copy = program_copy - (rip - (long int)jmp);
     rip = (long int)jmp;

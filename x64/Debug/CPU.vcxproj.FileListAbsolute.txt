@@ -1,0 +1,2 @@
+C:\Users\Аня\Desktop\Programming\Programms\For Ded\My-CPU\x64\Debug\CPU.exe
+C:\Users\Аня\Desktop\Programming\Programms\For Ded\My-CPU\x64\Debug\CPU.pdb
