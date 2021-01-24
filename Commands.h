@@ -13,24 +13,22 @@
 
 #define JUMP                                                    \
     program_copy = program_copy - (rip - (long long)jump) - 1;  \
-    rip = (long long)jump - 1;
+    rip = (long long)jump - 1;                                  \
 
 
 #define JUMP_STATEMENT(operator);                               \
     READ_VALUE(jump, sizeof(long long));                        \
                                                                 \
-    if (proc->stack->stack->length > 1)                          \
+    if (proc->stack->stack->length > 1)                         \
     {                                                           \
-        stack_pop(&proc->stack, &val_last);                      \
-        stack_pop(&proc->stack, &val_earl);                      \
+        stack_pop(&proc->stack, &val_last);                     \
+        stack_pop(&proc->stack, &val_earl);                     \
                                                                 \
         if (val_last operator val_earl)                         \
         {                                                       \
             JUMP                                                \
         }                                                       \
                                                                 \
-        stack_push(&proc->stack, val_earl);                      \
-        stack_push(&proc->stack, val_last);                      \
     }
 
 DEFINE_COMMANDS ( HLT, 0, 0,
@@ -52,6 +50,11 @@ DEFINE_COMMANDS ( PUSH, 1, 2,
     if ((int)mode && (int)mode < NO_REG_JUMP)
     {
         stack_push(&proc->stack, proc->registers[(int)mode - 1]);
+    }
+    else if ((int)mode && (int)mode >= ADDRSS_RAX && (int)mode <= ADDRSS_RDX)
+    {
+        long long address = proc->registers[(int)mode - MINUS - 1];
+        stack_push(&proc->stack, proc->ram[address]);
     }
     else if ((int)mode == ADDRSS)
     {
@@ -82,7 +85,7 @@ DEFINE_COMMANDS ( PUSH, 1, 2,
     {
         READ_VALUE(val_last, sizeof(long long));
 
-        if (i == DISASSEMBLING)                      //Плохо, убрать
+        if (i == DISASSEMBLING)                      //РџР»РѕС…Рѕ, СѓР±СЂР°С‚СЊ
             fprintf(dis, "[%lg]\n", val_last);
     }
     else
@@ -173,6 +176,12 @@ DEFINE_COMMANDS ( POP, 8, 1,
         stack_pop(&proc->stack, &val_last);
         proc->registers[(int)mode - 1] = val_last;
     }
+    else if ((int)mode && (int)mode >= ADDRSS_RAX && (int)mode <= ADDRSS_RDX)
+    {
+        long long address = proc->registers[(int)mode - MINUS - 1];
+        stack_pop(&proc->stack, &val_last);
+        proc->ram[address] = val_last;
+    }
     else if ((int)mode == ADDRSS)
     {
         READ_VALUE(val_last, sizeof(long long));
@@ -194,7 +203,7 @@ DEFINE_COMMANDS ( POP, 8, 1,
     {
         PRINT_REG
     }
-    else if ((int)mode == ADDRSS && i == DISASSEMBLING)       //Плохо
+    else if ((int)mode == ADDRSS && i == DISASSEMBLING)       //РџР»РѕС…Рѕ
     {
         READ_VALUE(val_last, sizeof(long long));
 
