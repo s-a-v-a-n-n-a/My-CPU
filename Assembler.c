@@ -61,7 +61,12 @@ void listing (FILE *list_file, long long address, Command *cmd)
     long long long_code = (long long)cmd->code;
 
     fprintf(list_file, "%04x | %2d ", (unsigned int)address, (unsigned)cmd->code);
-    if (cmd->code == 0)
+    if (cmd->mode >= ADDRSS_RAX && cmd->mode <= ADDRSS_RDX)
+    {
+        fprintf(list_file, "%d %10c | %16llx %33c | %5s [%d]\n",
+                       cmd->mode, space, long_code, space, cmd->command, cmd->mode);
+    }
+    else if (cmd->code == 0)
     {
         fprintf(list_file, "%12c | %16llx %33c | %5s\n",
                        space, long_code, space, cmd->command);
@@ -99,7 +104,13 @@ void writing_and_listing (Stat *asb, Command *cmd)
 {
     ALL_ASSERTIONS
 
-    if (cmd->mode == NO_REG_JUMP)
+    if (cmd->mode >= ADDRSS_RAX && cmd->mode <= ADDRSS_RDX)
+    {
+        fwrite(&cmd->mode, sizeof(char), 1, asb->out);
+
+        listing(asb->list_file, asb->address, cmd);
+    }
+    else if (cmd->mode == NO_REG_JUMP)
     {
         fwrite(&cmd->directory, sizeof(long long), 1, asb->out);
         listing(asb->list_file, asb->address, cmd);
@@ -119,7 +130,7 @@ void writing_and_listing (Stat *asb, Command *cmd)
         fwrite(&cmd->mode, sizeof(char), 1, asb->out);
         listing(asb->list_file, asb->address, cmd);
     }
-    else if (cmd->mode > ONLY_VAL)
+    else if (cmd->mode > ONLY_VAL && cmd->mode < NO_REG_JUMP)
     {
         fwrite(&cmd->mode, sizeof(char), 1, asb->out);
         listing(asb->list_file, asb->address, cmd);
@@ -156,7 +167,7 @@ int read_string (char **str, char *res, int flag)
     if (symbol == '[')
         return ADDRESS;
 
-    while (counter < MAX_SYMB && (isalnum(**str) || (**str == ':') || (**str == '#')))
+    while (counter < MAX_SYMB && (isalnum(**str) || (**str == ':') || (**str == '#') || (**str == '_')))
     {
         *res = **str;
         res++;
@@ -169,6 +180,27 @@ int read_string (char **str, char *res, int flag)
         return ERROR_READ;
 
     return STRING;
+}
+
+int read_register_for_ram(char **str)
+{
+    assert(str  != NULL);
+    assert(*str != NULL);
+
+    while (isspace(**str))
+    {
+        (*str)++;
+    }
+    (*str)++;
+
+    char registerr[MAX_REG] = "";
+
+    sscanf(*str, "%3s", registerr);
+
+    //Тут подразумевается, что закрывающая скобка идёт СРАЗУ после регистра
+    (*str) += MAX_REG;
+
+    return check_reg(registerr);
 }
 
 assembl_er read_val_for_push (Stat *asb, int mode_push, int just_check)
@@ -298,7 +330,7 @@ assembl_er read_value  (char **str, double *value, int code_call)
     return ASM_OK;
 }
 
-double check_reg (char *reg)
+int check_reg (char *reg)
 {
     assert(reg != NULL);
 
@@ -380,7 +412,7 @@ assembl_er translate_arg (Stat *asb, Command *cmd, int just_check)
 
         cmd->mode = ONLY_VAL;
 
-        int  read_reg = read_string(&(asb->input_cpy), cmd->reg, MIDDLE);
+        int read_reg = read_string(&(asb->input_cpy), cmd->reg, MIDDLE);
         if (read_reg == STRING)
         {
             cmd->mode = (char)check_reg(cmd->reg);
@@ -396,7 +428,21 @@ assembl_er translate_arg (Stat *asb, Command *cmd, int just_check)
             }
         }
         else if (read_reg == ADDRESS)
-            result = read_val_for_push(asb, PUSH_ADDRESS, just_check);
+        {
+            double value;
+            int read = sscanf(asb->input_cpy, "%lg", &value);
+            if (read)
+            {
+                result = read_val_for_push(asb, PUSH_ADDRESS, just_check);
+            }
+            else
+            {
+                int return_reg = read_register_for_ram(&(asb->input_cpy));
+                cmd->mode = return_reg + MINUS;
+                //cmd->args = ONE_ARG;
+                ALL_WRITE(TWO_ARGS);
+            }
+        }
         else if (cmd->code == COM_POP)
         {
             if (just_check == FINAL_WRITE)
@@ -473,7 +519,7 @@ assembl_er label_find(Stat *asb)
 
     if (amount)
     {
-        asb->labels        = (Labels*)calloc(1, sizeof(Labels));
+        asb->labels         = (Labels*)calloc(1, sizeof(Labels));
         asb->labels->labels = (The_label*)calloc(amount, sizeof(The_label));
     }
     else
