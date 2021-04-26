@@ -60,9 +60,7 @@ DEFINE_COMMANDS ( PUSH, 1, 2,
     {
         READ_VALUE(val_last, sizeof(long long));
 
-        stack_pop(&proc->stack, &val_earl);
-
-        proc->ram[(int)val_last] = val_earl;
+        stack_push(&proc->stack, proc->ram[(int)val_last]);
     }
     else
     {
@@ -85,7 +83,7 @@ DEFINE_COMMANDS ( PUSH, 1, 2,
     {
         READ_VALUE(val_last, sizeof(long long));
 
-        if (i == DISASSEMBLING)                      //Плохо, убрать
+        if (i == DISASSEMBLING)                      //Ïëîõî, óáðàòü
             fprintf(dis, "[%lg]\n", val_last);
     }
     else
@@ -186,7 +184,9 @@ DEFINE_COMMANDS ( POP, 8, 1,
     {
         READ_VALUE(val_last, sizeof(long long));
 
-        stack_push(&proc->stack, proc->ram[(int)val_last]);
+        stack_pop(&proc->stack, &val_earl);
+
+        proc->ram[(int)val_last] = val_earl;
     }
     else
     {
@@ -203,7 +203,7 @@ DEFINE_COMMANDS ( POP, 8, 1,
     {
         PRINT_REG
     }
-    else if ((int)mode == ADDRSS && i == DISASSEMBLING)       //Плохо
+    else if ((int)mode == ADDRSS && i == DISASSEMBLING)       //Ïëîõî
     {
         READ_VALUE(val_last, sizeof(long long));
 
