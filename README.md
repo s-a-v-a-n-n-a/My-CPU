@@ -5,7 +5,7 @@ How will it work:
 - HLT        ; Stops the program running
 - PUSH 1     ; pushes 1 into the stack
 - PUSH RAX   ; or other register - pushes the value from the register to the stack
-- PUSH [RAX] ;or other register - pushes the value from stack to the index of memory, that storages in this register
+- PUSH [RAX] ; or other register - pushes the value from the index of memory storaged in this register to the stack
 - ADD        ; pops two last values from the stack, add one to the other and pushes their sum back
 - SUB        ; pops two last values from the stack, substructs the later one from the earlier one and pushes the result back to the stack
 - MUL        ; pops two last values from the stack, multiplies one to the other and pushes the result back to the stack
@@ -15,7 +15,7 @@ How will it work:
 - COS        ; pops the last value from stack and pushes its cosinus back to the stack
 - POP        ; the same as OUT
 - POP RAX    ; or other register - pops the last value from the stack and pushes it to the register
-- POP [RAX]  ; or other register - pushes the value from the index of memory storaged in this register to the stack
+- POP [RAX]  ; or other register - pushes the value from stack to the index of memory, that storages in this register
 - SQRT       ; pops the last value from stack and pushes its square root back to the stack
 - IN         ; reads from the cmd the value and pushes it to the stack
 - DUMP       ; outputs the current state of stack to the log_file
