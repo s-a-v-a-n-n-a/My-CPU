@@ -36,4 +36,5 @@ To be continued
 
 **NOTES**
 ---------
+Processor uses modified version of stack (My-stack).
 The array of four registers is nulified before tha start of the processing.
