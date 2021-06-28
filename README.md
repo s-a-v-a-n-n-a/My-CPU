@@ -1,5 +1,17 @@
 # My-CPU
-That is my realisarion of softprocessor based on stack and array of four registers: RAX, RBX, RCX and RDX. The last are nulified before tha start of the processing.
+**DOCUMENTATION**
+================
+That is my realisarion of softprocessor based on stack and array of four registers: RAX, RBX, RCX and RDX. 
+
+**DESCRIPTION OF THE STRUCTURE**
+--------------------------------
+There are 3 separately working parts: Assembler, Processor and Disassembler. 
+Assembler makes "executable"(.xex) file from the "original code" (.xax).
+Processor executes .xex file.
+Disassembler makes AASM code from binary (.xex) code.
+
+**FUNCTIONAL**
+--------------
 You can write your instructions and run it with "My_processor.cpp".
 How will it work:
 - HLT        ; Stops the program running
@@ -21,3 +33,7 @@ How will it work:
 - DUMP       ; outputs the current state of stack to the log_file
 
 To be continued
+
+**NOTES**
+---------
+The array of four registers is nulified before tha start of the processing.
