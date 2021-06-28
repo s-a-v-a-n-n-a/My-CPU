@@ -36,5 +36,5 @@ To be continued
 
 **NOTES**
 ---------
-Processor uses modified version of stack (My-stack).
+Processor uses modified version of stack [My_stack](https://github.com/s-a-v-a-n-n-a/My_stack).
 The array of four registers is nulified before tha start of the processing.
