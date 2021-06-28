@@ -1,7 +1,7 @@
 # My-CPU
 **DOCUMENTATION**
 ================
-That is my realisarion of softprocessor based on stack and array of four registers: RAX, RBX, RCX and RDX. 
+That is my realisation of softprocessor based on stack and array of four registers: RAX, RBX, RCX and RDX. 
 
 **DESCRIPTION OF THE STRUCTURE**
 --------------------------------
@@ -37,4 +37,4 @@ To be continued
 **NOTES**
 ---------
 Processor uses modified version of stack [My_stack](https://github.com/s-a-v-a-n-n-a/My_stack).
-The array of four registers is nulified before tha start of the processing.
+The array of four registers is nulified before the start of the processing.
