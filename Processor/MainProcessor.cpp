@@ -1,4 +1,4 @@
-#include "Processor.c"
+#include "Processor.h"
 
 int main (int argc, const char **argv)
 {
@@ -17,6 +17,6 @@ int main (int argc, const char **argv)
     if (prog)
         start_processing(prog, length);
 
-    system("pause");
+    //system("pause");
     return 0;
 }

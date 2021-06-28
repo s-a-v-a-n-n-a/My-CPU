@@ -1,4 +1,4 @@
-#include "Disassembler.c"
+#include "Disassembler.h"
 
 int main ()
 {

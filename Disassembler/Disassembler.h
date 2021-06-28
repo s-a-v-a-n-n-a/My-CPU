@@ -4,9 +4,9 @@
 #include <assert.h>
 #include <ctype.h>
 
-#include "ReadingFromFile.h"
+#include "../FileWork/ReadingFromFile.h"
 //#include "Enums.h"
-#include "Consts.h"
+#include "../Common/Consts.h"
 
 const int FINDING       = 0;
 const int WRITING       = 1;

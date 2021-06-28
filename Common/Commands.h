@@ -64,7 +64,8 @@ DEFINE_COMMANDS ( PUSH, 1, 2,
     }
     else
     {
-        READ_VALUE(val_last, sizeof(double));
+        //READ_VALUE(val_last, sizeof(double));
+        READ_VALUE(val_last, sizeof(long long));
 
         stack_push(&proc->stack, val_last);
     }
@@ -84,14 +85,15 @@ DEFINE_COMMANDS ( PUSH, 1, 2,
         READ_VALUE(val_last, sizeof(long long));
 
         if (i == DISASSEMBLING)                      //Ïëîõî, óáðàòü
-            fprintf(dis, "[%lg]\n", val_last);
+            fprintf(dis, "[%lld]\n", val_last);
     }
     else
     {
-        READ_VALUE(val_last, sizeof(double));
+        //READ_VALUE(val_last, sizeof(double));
+        READ_VALUE(val_last, sizeof(long long));
 
         if (i == DISASSEMBLING)
-            fprintf(dis, "%lg\n", val_last);
+            fprintf(dis, "%lld\n", val_last);
     }
 })
 
@@ -134,9 +136,7 @@ DEFINE_COMMANDS ( MUL, 4, 0,
 DEFINE_COMMANDS ( OUT, 5, 0,
 {
     stack_back(&proc->stack, &val_last);
-    printf("out %lg\n", val_last);
-
-    system("pause");
+    printf("out %lld\n", val_last);
 },
 
 {
@@ -208,7 +208,7 @@ DEFINE_COMMANDS ( POP, 8, 1,
         READ_VALUE(val_last, sizeof(long long));
 
         if (i == DISASSEMBLING)
-            fprintf(dis, "[%lg]\n", val_last);
+            fprintf(dis, "[%lld]\n", val_last);
     }
     else if (i == DISASSEMBLING)
          fprintf(dis, "\n");
@@ -230,7 +230,7 @@ DEFINE_COMMANDS ( IN, 10, 0,
 {
     {
         printf("Write your value: ");
-        int prob = scanf("%lg", &val_last);
+        int prob = scanf("%lld", &val_last);
 
         if (prob != 1)
         {
@@ -404,7 +404,8 @@ DEFINE_COMMANDS ( CALL, 21, 1,
 
 DEFINE_COMMANDS ( REV, 22, 0,
 {
-    double jmp = 0;
+    // double jmp = 0;
+    long long jmp = 0;
     stack_pop(&proc->funcs, &jmp);
 
     program_copy = program_copy - (rip - (long int)jmp);

@@ -1,5 +1,10 @@
 #include "Assembler.h"
 
+// extern const char *LISTING_FILE         = "listing.txt";
+// extern const char *EXECUTABLE_FILE      = "binary.xex";
+// extern const char *ASSEMBLING_FILE_NAME = "~/Repositories/My-CPU";
+// extern const char *DISASSEMBLING_FILE   = "disassemble.txt";
+
 #define DEFINE_COMMANDS(name, number, arg, coding, discoding)                                                    \
     if (!strcmp(com->command, #name))                                                                            \
     {                                                                                                            \
@@ -63,17 +68,17 @@ void listing (FILE *list_file, long long address, Command *cmd)
     fprintf(list_file, "%04x | %2d ", (unsigned int)address, (unsigned)cmd->code);
     if (cmd->mode >= ADDRSS_RAX && cmd->mode <= ADDRSS_RDX)
     {
-        fprintf(list_file, "%d %10c | %16llx %33c | %5s [%d]\n",
+        fprintf(list_file, "%d %10c | %16llx %33c | %4s [%d]\n",
                        cmd->mode, space, long_code, space, cmd->command, cmd->mode);
     }
     else if (cmd->code == 0)
     {
-        fprintf(list_file, "%12c | %16llx %33c | %5s\n",
+        fprintf(list_file, "%12c | %16llx %33c | %4s\n",
                        space, long_code, space, cmd->command);
     }
     else if (!cmd->args)
     {
-        fprintf(list_file, "%12c | %14c%02x %33c | %5s\n",
+        fprintf(list_file, "%12c | %14c%02x %33c | %4s\n",
                        space, space, cmd->code, space, cmd->command);
     }
     else if (cmd->args == ONE_ARG)
@@ -83,20 +88,20 @@ void listing (FILE *list_file, long long address, Command *cmd)
         {
             long long long_dir = (long long)cmd->directory;
 
-            fprintf(list_file, "%d %10lld | %14c%02x %14c%02x %016llx | %5s %4lld\n",
+            fprintf(list_file, "%d %10lld | %14c%02x %14c%02x %016llx | %4s %4lld\n",
                         cmd->mode, cmd->directory, space, cmd->code, space, cmd->mode, long_dir, cmd->command, cmd->directory);
         }
         else
         {
-            fprintf(list_file, "%d %10c | %14c%02x %14c%02x %16c | %5s %4s\n",
+            fprintf(list_file, "%d %10c | %14c%02x %14c%02x %16c | %4s %4s\n",
                         cmd->mode, space, space, cmd->code, space, cmd->mode, space, cmd->command, cmd->reg);
         }
     }
     else
     {
         long long long_mode = (long long)cmd->mode;
-        fprintf(list_file, "%d %10lg | %14c%02x %14c%02x %016llx | %5s %4c %lg\n",
-                        cmd->mode, cmd->value, space, cmd->code, space, cmd->mode, cmd->value, cmd->command, (char)space, cmd->value);
+        fprintf(list_file, "%d %10lld | %14c%02x %14c%02x %016llx | %4s %4c %lld\n",
+                        cmd->mode, cmd->value, (char)space, cmd->code, (char)space, cmd->mode, (unsigned long long)cmd->value, cmd->command, (char)space, cmd->value);
     }
 }
 
@@ -118,7 +123,7 @@ void writing_and_listing (Stat *asb, Command *cmd)
     else if (cmd->mode == ADDRSS)
     {
         fwrite(&cmd->mode,  sizeof(char), 1, asb->out);
-        fwrite(&cmd->value, sizeof(double), 1, asb->out);
+        fwrite(&cmd->value, sizeof(long long), 1, asb->out);
 
         cmd->args = TWO_ARGS;
         listing(asb->list_file, asb->address, cmd);
@@ -138,7 +143,7 @@ void writing_and_listing (Stat *asb, Command *cmd)
     else if (cmd->mode == ONLY_VAL)
     {
         fwrite(&cmd->mode,  sizeof(char), 1, asb->out);
-        fwrite(&cmd->value, sizeof(double), 1, asb->out);
+        fwrite(&cmd->value, sizeof(long long), 1, asb->out);
 
         listing(asb->list_file, asb->address, cmd);
     }
@@ -146,9 +151,11 @@ void writing_and_listing (Stat *asb, Command *cmd)
 
 int read_string (char **str, char *res, int flag)
 {
-    assert(str  != NULL);
-    assert(*str != NULL);
-    assert(res  != NULL);
+    assert(str);
+    assert(*str);
+    //assert(res  != NULL);
+    if (!res)
+        res = (char*)calloc(MAX_SYMB, sizeof(char));
 
     int counter = 0;
 
@@ -207,13 +214,13 @@ assembl_er read_val_for_push (Stat *asb, int mode_push, int just_check)
 {
     ALL_ASSERTIONS
 
-    double value = 0;
+    long long value = 0;
 
     assembl_er read_val = read_value(&(asb->input_cpy), &value, mode_push);
 
     char   mode = ONLY_VAL;
     char   code = COM_PUSH;
-    double ram  = 0;
+    long long ram  = 0;
 
     if (mode_push == PUSH_ADDRESS)
     {
@@ -226,13 +233,16 @@ assembl_er read_val_for_push (Stat *asb, int mode_push, int just_check)
         return read_val;
     }
 
-    char *put  = "PUSH";
+    char *to_put  = (char*)calloc(6, sizeof(char));
+    memcpy(to_put, "PUSH", 4);
 
     if (just_check == FINAL_WRITE)
     {
-        Command* cmd     = (Command*) calloc(1, sizeof(Command));
-        cmd->command     = put;
-        cmd->reg         = NULL;
+        // Command* cmd     = (Command*) calloc(1, sizeof(Command));
+        // cmd->command     = to_put;
+        // cmd->reg         = NULL;
+        Command *cmd     = command_new();
+        memcpy(cmd->command, to_put, 4);
         cmd->code        = code;
         cmd->mode        = mode;
         cmd->args        = ONE_ARG + TWO_ARGS;
@@ -241,10 +251,13 @@ assembl_er read_val_for_push (Stat *asb, int mode_push, int just_check)
         cmd->value       = value;
         cmd->flag        = 0;
         writing_and_listing(asb, cmd);
+
+        command_delete(cmd);
+        //free(cmd);
     }
     asb->address += THREE_ARGS;
 
-    free(put);
+    free(to_put);
 
     return read_val;
 }
@@ -256,7 +269,9 @@ assembl_er read_label (Stat *asb, Command *cmd,  int just_check)
     assembl_er checking_label = ASM_OK;
 
     if (just_check == FINAL_WRITE)
+    {
         checking_label = check_label(cmd->reg, &cmd->directory, asb->labels);
+    }
 
     if (checking_label == ASM_OK)
     {
@@ -268,7 +283,7 @@ assembl_er read_label (Stat *asb, Command *cmd,  int just_check)
     return checking_label;
 }
 
-assembl_er read_value  (char **str, double *value, int code_call)
+assembl_er read_value  (char **str, long long *value, int code_call)
 {
     assert(str  != NULL);
     assert(*str != NULL);
@@ -288,7 +303,7 @@ assembl_er read_value  (char **str, double *value, int code_call)
         (*str)++;
     }
 
-    sscanf(*str, "%lg%n", value, &trailing_index);
+    sscanf(*str, "%lld%n", value, &trailing_index);
 
     *str += trailing_index;
 
@@ -400,7 +415,7 @@ assembl_er translate_arg (Stat *asb, Command *cmd, int just_check)
     assert(cmd != NULL);
 
     int trailing_index = 0;
-    sscanf(asb->input_cpy, "%lg%n", &cmd->value, &trailing_index);
+    sscanf(asb->input_cpy, "%lld%n", &cmd->value, &trailing_index);
 
     assembl_er result = ASM_OK;
 
@@ -426,11 +441,14 @@ assembl_er translate_arg (Stat *asb, Command *cmd, int just_check)
                 cmd->args = ONE_ARG;
                 ALL_WRITE(TWO_ARGS);
             }
+
+            free(cmd->reg);
+            cmd->reg = NULL;
         }
         else if (read_reg == ADDRESS)
         {
-            double value;
-            int read = sscanf(asb->input_cpy, "%lg", &value);
+            long long value;
+            int read = sscanf(asb->input_cpy, "%lld", &value);
             if (read)
             {
                 result = read_val_for_push(asb, PUSH_ADDRESS, just_check);
@@ -442,21 +460,32 @@ assembl_er translate_arg (Stat *asb, Command *cmd, int just_check)
                 //cmd->args = ONE_ARG;
                 ALL_WRITE(TWO_ARGS);
             }
+
+            free(cmd->reg);
+            cmd->reg = NULL;
         }
         else if (cmd->code == COM_POP)
         {
             if (just_check == FINAL_WRITE)
             {
                 cmd->mode = NOTHING;
-                cmd->reg  = "";
+                free(cmd->reg);
+                cmd->reg  = NULL;
                 writing_and_listing(asb, cmd);
+            }
+            else
+            {
+                free(cmd->reg);
+                cmd->reg = NULL;
             }
             asb->address += TWO_ARGS;
         }
         else
+        {
             result = ASM_WRONG_COMMAND;
-
-        free(cmd->reg);
+            free(cmd->reg);
+            cmd->reg = NULL;
+        }
      }
      else if (cmd->code == COM_PUSH)
         result = read_val_for_push(asb, PUSH_VAL, just_check);
@@ -482,6 +511,21 @@ assembl_er label_construct(char *command, int len, long int amount, long long ad
     return ASM_OK;
 }
 
+assembl_er label_destruct (Labels *labels)
+{
+    long long labels_amount = labels->amount;
+
+    for (long long i = 0; i < labels_amount; i++)
+    {
+        free(labels->labels[i].label_name);
+    }
+
+    free(labels->labels);
+    free(labels);
+
+    return ASM_OK;
+}
+
 assembl_er label_find(Stat *asb)
 {
     ALL_ASSERTIONS
@@ -490,15 +534,9 @@ assembl_er label_find(Stat *asb)
 
     long int amount  = 0;
 
-    Command *com = (Command*) calloc(1, sizeof(Command));
+    Command *com = command_new();
     if (!com)
         return ASM_MEMORY_ERROR;
-    com->command = (char*)    calloc(MAX_SYMB, sizeof(char));
-    if (!com)
-    {
-        free(com);
-        return ASM_MEMORY_ERROR;
-    }
 
     asb->input_cpy = asb->input;
 
@@ -514,12 +552,12 @@ assembl_er label_find(Stat *asb)
                     break;
                 }
     }
-    free(com->command);
-    free(com);
+    
+    command_delete(com);
 
     if (amount)
     {
-        asb->labels         = (Labels*)calloc(1, sizeof(Labels));
+        asb->labels         = (Labels*)   calloc(1, sizeof(Labels));
         asb->labels->labels = (The_label*)calloc(amount, sizeof(The_label));
     }
     else
@@ -534,15 +572,9 @@ assembl_er label_parse(Stat *asb)
 
     assembl_er error = ASM_OK;
 
-    Command *com = (Command*) calloc(1, sizeof(Command));
+    Command *com = command_new();
     if (!com)
         return ASM_MEMORY_ERROR;
-    com->command = (char*)    calloc(MAX_SYMB, sizeof(char));
-    if (!com)
-    {
-        free(com);
-        return ASM_MEMORY_ERROR;
-    }
 
     asb->input_cpy = asb->input;
 
@@ -562,7 +594,7 @@ assembl_er label_parse(Stat *asb)
         if (read_com == 0)
         {
             com->flag = 1;
-            #include "Commands.h"
+            #include "../Common/Commands.h"
             long int flag_label = 0;
             if (com->flag)
             {
@@ -590,8 +622,7 @@ assembl_er label_parse(Stat *asb)
     #undef LISTING
     #undef CHECK_END
 
-    free(com->command);
-    free(com);
+    command_delete(com);
 
     asb->labels->amount = amount;
 
@@ -619,20 +650,23 @@ assembl_er assembling (Stat *asb)
 
     assembl_er error = ASM_OK;
 
-    Command *com = (Command*) calloc(1, sizeof(Command));
+    // Command *com = (Command*) calloc(1, sizeof(Command));
+    // if (!com)
+    //     return ASM_MEMORY_ERROR;
+    // com->command = (char*)    calloc(MAX_SYMB, sizeof(char));
+    // if (!com->command)
+    // {
+    //     free(com);
+    //     return ASM_MEMORY_ERROR;
+    // }
+    Command *com = command_new();
     if (!com)
         return ASM_MEMORY_ERROR;
-    com->command = (char*)    calloc(MAX_SYMB, sizeof(char));
-    if (!com)
-    {
-        free(com);
-        return ASM_MEMORY_ERROR;
-    }
 
     asb->input_cpy = asb->input;
 
-    if (!(com->command))
-        return ASM_MEMORY_ERROR;
+    // if (!(com->command))
+    //     return ASM_MEMORY_ERROR;
 
     for (unsigned int i = 0; i < asb->n_lines; i++)
     {
@@ -640,7 +674,7 @@ assembl_er assembling (Stat *asb)
 
         if (read_com == STRING)
         {
-            #include "Commands.h"
+            #include "../Common/Commands.h"
         }
     }
 
@@ -648,13 +682,78 @@ assembl_er assembling (Stat *asb)
     #undef LISTING
     #undef CHECK_END
 
-    free(com->command);
-    free(com);
+    command_delete(com);
 
     return error;
 }
 
-assembl_er stat_construct(Stat **asb, const char* file_name)
+
+Command *command_new()
+{
+    Command *new_command = (Command*)calloc(1, sizeof(Command));
+    if (!new_command)
+        return NULL;
+    if(command_construct(new_command) != COMMAND_OK)
+    {
+        free(new_command);
+        return NULL;
+    }
+
+    return new_command;
+}
+
+command_report command_construct(Command *thus)
+{
+    if (!thus)
+        return COMMAND_NULL;
+
+    thus->command = (char*)calloc(MAX_SYMB, sizeof(char));
+    if (!thus->command)
+        return COMMAND_MEMORY_ERROR;
+
+    thus->reg = NULL;
+
+    return COMMAND_OK;
+}
+
+command_report command_delete(Command *thus)
+{
+    if (!thus)
+        return COMMAND_NULL;
+
+    command_destruct(thus);
+    free(thus);
+
+    return COMMAND_OK;
+}
+
+command_report command_destruct(Command *thus)
+{
+    if (!thus)
+        return COMMAND_NULL;
+
+    free(thus->command);
+    if (thus->reg)
+        free(thus->reg);
+
+    return COMMAND_OK;
+}
+
+
+
+Stat *stat_new (const char* file_name)
+{
+    Stat *new_one = (Stat*)calloc(1, sizeof(Stat));
+
+    if (stat_construct(new_one, file_name) != ASM_OK)
+    {
+        return NULL;
+    }
+
+    return new_one;
+}
+
+assembl_er stat_construct(Stat *asb, const char* file_name)
 {
     assert(asb != NULL);
 
@@ -663,7 +762,9 @@ assembl_er stat_construct(Stat **asb, const char* file_name)
 
     char* first = reading_file(file_name, &length, &n_lines, 1);
     if (!first)
+    {
         return ASM_FILE_ERROR;
+    }
 
     FILE* out = fopen(EXECUTABLE_FILE, "wb");
     if (!out)
@@ -673,46 +774,52 @@ assembl_er stat_construct(Stat **asb, const char* file_name)
     if (!list_file)
         return ASM_FILE_ERROR;
 
-    *asb = (Stat*)calloc(1, sizeof(Stat));
-    if (!(*asb))
-        return ASM_MEMORY_ERROR;
+    // *asb = (Stat*)calloc(1, sizeof(Stat));
+    // if (!(*asb))
+    //     return ASM_MEMORY_ERROR;
 
     Labels* labels = NULL;
 
     list_header(list_file);
 
-    (*asb)->out       = out;
-    (*asb)->list_file = list_file;
-    (*asb)->input     = first;
-    (*asb)->n_lines   = n_lines;
-    (*asb)->address   = 0;
-    (*asb)->labels    = labels;
+    (asb)->out       = out;
+    (asb)->list_file = list_file;
+    (asb)->input     = first;
+    (asb)->n_lines   = n_lines;
+    (asb)->address   = 0;
+    (asb)->labels    = labels;
 
     return ASM_OK;
 }
 
-void stat_destruct (Stat** asb)
+void stat_destruct (Stat* asb)
 {
-    fclose((*asb)->out);
-    fclose((*asb)->list_file);
-    if ((*asb)->input)
-        free((*asb)->input);
-    if ((*asb)->labels)
+    fclose((asb)->out);
+    fclose((asb)->list_file);
+
+    if (asb->input != asb->input_cpy)
+        free(asb->input_cpy);
+
+    if ((asb)->input)
+        free((asb)->input);
+    if ((asb)->labels)
     {
-        if ((*asb)->labels->labels)
-            free((*asb)->labels->labels);
-        free((*asb)->labels);
+        label_destruct(asb->labels);
     }
 
-    free(*asb);
+    free(asb);
 }
 
 assembl_er assembling_control (const char *file_name)
 {
-    Stat* current = NULL;
-    assembl_er err = stat_construct(&current, file_name);
+    Stat* current  = stat_new(file_name);
+    assembl_er err = ASM_OK;
+    if (current)
+        err = ASM_OK;
+    else
+        err = ASM_MEMORY_ERROR;
 
-    if (err == ASM_OK)
+    if (current)
     {
         err = label_find(current);
     }
@@ -730,7 +837,7 @@ assembl_er assembling_control (const char *file_name)
         }
     }
 
-    stat_destruct(&current);
+    stat_destruct(current);
 
     return err;
 }

@@ -1,31 +1,123 @@
 CURRENT STATE OF STACK
-THE NEWS FROM DESTRUCTOR
-EVERYTHING IS OKAY
-Current capacity: 4
-Current size    : 0
-Current address of the stack : 00B135C8
-Current address of the buffer: 00B135E8
-[   0] : 1.#QNAN
-[   1] : 1.#QNAN
-[   2] : NAN (POISON)
-[   3] : NAN (POISON)
-Current hash of the buffer: 7798904
-Current hash of the stack : 3541
+THE NEWS FROM PUSHING
+THE TRANSACTION WAS MADE
+FIRST CANARY : 5e7ca6ed
+LAST  CANARY : ffca6ed
+Current capacity: 10
+Current size    : 2
+Current address of the stack : 0x4ba5630
+Current address of the buffer: 0x4ba7d90
+[   0] : -4000000000000
+[   1] : 10
+[   2] : 2
+[   3] : -4000000000000
+[   4] : NAN (POISON)
+[   5] : NAN (POISON)
+[   6] : NAN (POISON)
+[   7] : NAN (POISON)
+[   8] : NAN (POISON)
+[   9] : NAN (POISON)
+Current hash of the buffer: 69992507
+Current hash of the stack : 2590
 
 CURRENT STATE OF STACK
-THE NEWS FROM DESTRUCTOR
-EVERYTHING IS OKAY
-Current capacity: 7
-Current size    : 4
-Current address of the stack : 00B11660
-Current address of the buffer: 00B16640
-[   0] : 1.#QNAN
-[   1] : 0
-[   2] : 0
-[   3] : 0
-[   4] : -0.6
-[   5] : 1.#QNAN
+THE NEWS FROM PUSHING
+THE TRANSACTION WAS MADE
+FIRST CANARY : 5e7ca6ed
+LAST  CANARY : ffca6ed
+Current capacity: 10
+Current size    : 2
+Current address of the stack : 0x4ba5830
+Current address of the buffer: 0x4ba9110
+[   0] : -4000000000000
+[   1] : 8
+[   2] : 565
+[   3] : -4000000000000
+[   4] : NAN (POISON)
+[   5] : NAN (POISON)
 [   6] : NAN (POISON)
-Current hash of the buffer: 361693516
-Current hash of the stack : -368
+[   7] : NAN (POISON)
+[   8] : NAN (POISON)
+[   9] : NAN (POISON)
+Current hash of the buffer: 95551598
+Current hash of the stack : 59
+
+CURRENT STATE OF STACK
+THE NEWS FROM PUSHING
+THE TRANSACTION WAS MADE
+FIRST CANARY : 5e7ca6ed
+LAST  CANARY : ffca6ed
+Current capacity: 22
+Current size    : 8
+Current address of the stack : 0x4ba5830
+Current address of the buffer: 0x4baa490
+[   0] : -4000000000000
+[   1] : 8
+[   2] : 565
+[   3] : 308
+[   4] : 308
+[   5] : 308
+[   6] : 308
+[   7] : 308
+[   8] : 308
+[   9] : -4000000000000
+[  10] : NAN (POISON)
+[  11] : NAN (POISON)
+[  12] : NAN (POISON)
+[  13] : NAN (POISON)
+[  14] : NAN (POISON)
+[  15] : NAN (POISON)
+[  16] : NAN (POISON)
+[  17] : NAN (POISON)
+[  18] : NAN (POISON)
+[  19] : NAN (POISON)
+[  20] : NAN (POISON)
+[  21] : NAN (POISON)
+Current hash of the buffer: 1024721324
+Current hash of the stack : -1593
+
+CURRENT STATE OF STACK
+THE NEWS FROM POPPING
+THE TRANSACTION WAS MADE
+FIRST CANARY : 5e7ca6ed
+LAST  CANARY : ffca6ed
+Current capacity: 13
+Current size    : 3
+Current address of the stack : 0x4ba5830
+Current address of the buffer: 0x4bab8d0
+[   0] : -4000000000000
+[   1] : 8
+[   2] : 565
+[   3] : 308
+[   4] : -4000000000000
+[   5] : NAN (POISON)
+[   6] : NAN (POISON)
+[   7] : NAN (POISON)
+[   8] : NAN (POISON)
+[   9] : NAN (POISON)
+[  10] : NAN (POISON)
+[  11] : NAN (POISON)
+[  12] : NAN (POISON)
+Current hash of the buffer: 180945059
+Current hash of the stack : -7132
+
+CURRENT STATE OF STACK
+THE NEWS FROM POPPING
+THE TRANSACTION WAS MADE
+FIRST CANARY : 5e7ca6ed
+LAST  CANARY : ffca6ed
+Current capacity: 8
+Current size    : 1
+Current address of the stack : 0x4ba5830
+Current address of the buffer: 0x4bacc90
+[   0] : -4000000000000
+[   1] : 8
+[   2] : -4000000000000
+[   3] : NAN (POISON)
+[   4] : NAN (POISON)
+[   5] : NAN (POISON)
+[   6] : NAN (POISON)
+[   7] : NAN (POISON)
+Current hash of the buffer: 38010935
+Current hash of the stack : 2286
 

@@ -1,6 +1,8 @@
 IN
-POP RAX
+POP 
 PUSH 1
+POP RBX
+PUSH RBX
 
 CALL #fact
 OUT
@@ -9,23 +11,23 @@ HLT
 fact:
 PUSH RAX
 
-JE #next
+JE #next 		
 
-POP
-POP RBX
+;POP
+;POP RBX
 PUSH RBX
 PUSH RBX
 PUSH 1
 ADD
+POP RBX
+PUSH RBX
 
-CALL #fact
+JMP #fact
 
 MUL
 REV
 
 
 next:
-
-POP
 
 REV
