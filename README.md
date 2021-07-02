@@ -1,5 +1,4 @@
 # My-CPU
-================
 
 That is my realisation of softprocessor based on stack and array of four registers: RAX, RBX, RCX and RDX. 
 
